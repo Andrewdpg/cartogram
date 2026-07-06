@@ -1,0 +1,13 @@
+{
+  "id": "deployment",
+  "title": "Deployment",
+  "nodes": [
+    { "id": "web-frontend", "label": "Web Frontend", "kind": "external" },
+    { "id": "api-service", "label": "API Service", "kind": "service", "childDiagram": "api-service.components" },
+    { "id": "database", "label": "Database", "kind": "database" }
+  ],
+  "edges": [
+    { "from": "web-frontend", "to": "api-service", "label": "HTTPS" },
+    { "from": "api-service", "to": "database", "label": "SQL" }
+  ]
+}

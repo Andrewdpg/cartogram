@@ -1,0 +1,11 @@
+{
+  "id": "api-service.components",
+  "title": "API Service — Components",
+  "nodes": [
+    { "id": "auth-module", "label": "Auth Module", "kind": "component", "childDiagram": "auth-module.flow" },
+    { "id": "orders-module", "label": "Orders Module", "kind": "component" }
+  ],
+  "edges": [
+    { "from": "auth-module", "to": "orders-module", "label": "authorizes" }
+  ]
+}

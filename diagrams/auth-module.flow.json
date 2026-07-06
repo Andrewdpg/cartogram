@@ -1,0 +1,11 @@
+{
+  "id": "auth-module.flow",
+  "title": "Auth Module — Flow",
+  "nodes": [
+    { "id": "validate-credentials", "label": "Validate credentials", "kind": "component" },
+    { "id": "issue-token", "label": "Issue token", "kind": "component" }
+  ],
+  "edges": [
+    { "from": "validate-credentials", "to": "issue-token", "label": "on success" }
+  ]
+}
