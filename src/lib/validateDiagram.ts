@@ -49,7 +49,7 @@ export function validateDiagramShape(raw: unknown, diagramId: string): Diagram {
     if (node.dataOwned !== undefined && typeof node.dataOwned !== 'string') {
       throw new InvalidDiagramError(diagramId, `node "${node.id}" has invalid "dataOwned" (must be string)`)
     }
-    for (const field of ['techStack', 'gotchas', 'attributes', 'operations'] as const) {
+    for (const field of ['techStack', 'gotchas', 'attributes', 'operations', 'sourceRefs'] as const) {
       if (node[field] !== undefined && !isStringArray(node[field])) {
         throw new InvalidDiagramError(diagramId, `node "${node.id}" has invalid "${field}" (must be string[])`)
       }

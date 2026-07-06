@@ -85,6 +85,19 @@ export function DiagramDetailPanel({ node, notation, onClose }: DiagramDetailPan
           </ul>
         </section>
       )}
+
+      {node.sourceRefs && node.sourceRefs.length > 0 && (
+        <section>
+          <h3 style={sectionHeadingStyle}>Source</h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {node.sourceRefs.map((ref, i) => (
+              <li key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                {ref}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

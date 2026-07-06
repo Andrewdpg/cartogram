@@ -47,6 +47,7 @@ export interface DiagramNodeData {
   gotchas?: string[]
   attributes?: string[]
   operations?: string[]
+  sourceRefs?: string[]
 }
 
 export interface DiagramEdgeData {

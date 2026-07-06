@@ -42,6 +42,33 @@ describe('validateDiagramShape', () => {
     expect(() => validateDiagramShape(raw, 'x')).toThrow(InvalidDiagramError)
   })
 
+  it('rejects a node with a non-array "sourceRefs"', () => {
+    const raw = {
+      id: 'x',
+      title: 'X',
+      nodes: [{ id: 'a', label: 'A', kind: 'service', sourceRefs: 'not-an-array' }],
+      edges: [],
+    }
+    expect(() => validateDiagramShape(raw, 'x')).toThrow(/sourceRefs/)
+  })
+
+  it('accepts a node with valid "sourceRefs"', () => {
+    const raw = {
+      id: 'x',
+      title: 'X',
+      nodes: [
+        {
+          id: 'a',
+          label: 'A',
+          kind: 'service',
+          sourceRefs: ['internal/service/fraud/fraudService.go:112-173'],
+        },
+      ],
+      edges: [],
+    }
+    expect(() => validateDiagramShape(raw, 'x')).not.toThrow()
+  })
+
   it('rejects an edge referencing an unknown node', () => {
     const raw = {
       id: 'x',
