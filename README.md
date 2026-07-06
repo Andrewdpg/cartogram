@@ -58,6 +58,10 @@ Legend tab in the running app, to see them all.
 - `dataOwned`, `gotchas` — shown only in the detail panel.
 - `attributes`, `operations` — shown only for a `class`-kind node in a
   `uml-structural` diagram, in both the node face and the detail panel.
+- `sourceRefs` — array of strings pointing at the real code a node's claims
+  are grounded in (a bare path, a path with a line range, or a path with a
+  `#symbol`), shown as a monospace list in the detail panel. Not validated
+  beyond "is a string[]" — it's a trusted citation, not a parsed reference.
 
 Run `npm run validate` after editing diagrams to catch typos: an unknown
 `kind`/`notation`/`relationship`, a malformed optional field, an edge
