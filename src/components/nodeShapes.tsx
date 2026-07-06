@@ -104,6 +104,8 @@ function DatabaseShape({ children }: ShapeProps) {
       </svg>
       <div
         style={{
+          display: 'flex',
+          flexDirection: 'column',
           background: 'var(--kind-database-bg)',
           borderLeft: '1px solid var(--kind-database-fg)',
           borderRight: '1px solid var(--kind-database-fg)',

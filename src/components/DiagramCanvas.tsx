@@ -1,5 +1,15 @@
 import type { ComponentType } from 'react'
-import { ReactFlow, ReactFlowProvider, Background, BackgroundVariant, Controls, type Node, type Edge } from '@xyflow/react'
+import { useEffect, useMemo } from 'react'
+import {
+  ReactFlow,
+  ReactFlowProvider,
+  Background,
+  BackgroundVariant,
+  Controls,
+  useNodesState,
+  type Node,
+  type Edge,
+} from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { DiagramNode } from './DiagramNode'
 import { RELATIONSHIP_MARKER_IDS, UmlMarkerDefs } from './umlMarkers'
@@ -29,23 +39,37 @@ function buildEdgeLabel(e: DiagramEdgeData): string | undefined {
 }
 
 export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }: DiagramCanvasProps) {
-  const flowNodes: Node[] = nodes.map((n) => ({
-    id: n.id,
-    position: { x: n.x, y: n.y },
-    data: {
-      id: n.id,
-      label: n.label,
-      kind: n.kind,
-      responsibility: n.responsibility,
-      techStack: n.techStack,
-      dataOwned: n.dataOwned,
-      gotchas: n.gotchas,
-      attributes: n.attributes,
-      operations: n.operations,
-      onOpenDetail: onNodeDetailRequest,
-    },
-    type: 'diagramNode',
-  }))
+  // ponytail: React Flow needs its own node state to keep drag positions —
+  // passing a freshly-computed `nodes` array straight into `<ReactFlow>`
+  // resets positions to the auto-layout on every unrelated re-render (e.g.
+  // opening the detail panel). Re-seed only when the diagram itself changes
+  // (different node ids), not on every parent render.
+  const diagramKey = useMemo(() => JSON.stringify(nodes), [nodes])
+
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node>([])
+
+  useEffect(() => {
+    setFlowNodes(
+      nodes.map((n) => ({
+        id: n.id,
+        position: { x: n.x, y: n.y },
+        data: {
+          id: n.id,
+          label: n.label,
+          kind: n.kind,
+          responsibility: n.responsibility,
+          techStack: n.techStack,
+          dataOwned: n.dataOwned,
+          gotchas: n.gotchas,
+          attributes: n.attributes,
+          operations: n.operations,
+          onOpenDetail: onNodeDetailRequest,
+        },
+        type: 'diagramNode',
+      }))
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diagramKey, onNodeDetailRequest])
 
   const flowEdges: Edge[] = edges.map((e) => {
     const markerId = e.relationship ? RELATIONSHIP_MARKER_IDS[e.relationship] : undefined
@@ -70,6 +94,7 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
           nodes={flowNodes}
           edges={flowEdges}
           nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
           onNodeClick={(_, node) => onNodeClick(node.id)}
           fitView
           defaultEdgeOptions={{ style: { stroke: '#3a3e4b' } }}
