@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { loadDiagram } from '../lib/loadDiagram'
 import { resolveDiagramPath } from '../lib/resolveDiagramPath'
+import { validateDiagramShape } from '../lib/validateDiagram'
 import { DiagramNotFoundError } from '../lib/types'
 import type { Diagram } from '../lib/types'
 import { layoutDiagram } from '../lib/autoLayout'
 import { DiagramCanvas } from './DiagramCanvas'
 import { Breadcrumb } from './Breadcrumb'
-import { DiagramDetailPanel } from './DiagramDetailPanel'
+import { SidePanel } from './SidePanel'
 
 type Resolution = { chain: Diagram[] } | { notFoundId: string }
 
@@ -19,6 +20,9 @@ export function DiagramPage() {
     [params['*']]
   )
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  // ponytail: session-only edits from the JSON tab, keyed by diagram id —
+  // lost on refresh, never written back to diagrams/*.json.
+  const [overrides, setOverrides] = useState<Map<string, Diagram>>(new Map())
 
   const resolution: Resolution = useMemo(() => {
     try {
@@ -54,7 +58,8 @@ export function DiagramPage() {
     )
   }
 
-  const current = resolution.chain[resolution.chain.length - 1]
+  const originalCurrent = resolution.chain[resolution.chain.length - 1]
+  const current = overrides.get(originalCurrent.id) ?? originalCurrent
   const positionedNodes = layoutDiagram(current.nodes, current.edges)
   const labels = ['Home', ...resolution.chain.slice(1).map((d) => d.title)]
   const selectedNode = current.nodes.find((n) => n.id === selectedNodeId) ?? null
@@ -70,6 +75,22 @@ export function DiagramPage() {
     navigate(`/${segments.slice(0, index).join('/')}`)
   }
 
+  function handleApplyJson(raw: string): string | null {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch (err) {
+      return `Invalid JSON: ${(err as Error).message}`
+    }
+    try {
+      const diagram = validateDiagramShape(parsed, originalCurrent.id)
+      setOverrides((prev) => new Map(prev).set(originalCurrent.id, diagram))
+      return null
+    } catch (err) {
+      return (err as Error).message
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
@@ -82,10 +103,12 @@ export function DiagramPage() {
             onNodeDetailRequest={setSelectedNodeId}
           />
         </div>
-        <DiagramDetailPanel
+        <SidePanel
           node={selectedNode}
           notation={current.notation ?? 'c4'}
-          onClose={() => setSelectedNodeId(null)}
+          onCloseNode={() => setSelectedNodeId(null)}
+          diagramJson={JSON.stringify(current, null, 2)}
+          onApplyJson={handleApplyJson}
         />
       </div>
     </div>

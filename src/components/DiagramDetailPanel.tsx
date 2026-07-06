@@ -1,5 +1,6 @@
 import type { DiagramNodeData, Notation } from '../lib/types'
 import { getTechIcon } from '../lib/techIcons'
+import { TechBadge } from './TechBadge'
 
 export interface DiagramDetailPanelProps {
   node: DiagramNodeData | null
@@ -10,22 +11,14 @@ export interface DiagramDetailPanelProps {
 const sectionHeadingStyle = { fontSize: 12, textTransform: 'uppercase' as const, color: 'var(--text-muted)' }
 
 export function DiagramDetailPanel({ node, notation, onClose }: DiagramDetailPanelProps) {
-  if (!node) return null
+  if (!node) {
+    return <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Click a node's eye icon to see its details here.</p>
+  }
 
   const showClassMembers = node.kind === 'class' && notation === 'uml-structural'
 
   return (
-    <aside
-      style={{
-        width: 320,
-        flexShrink: 0,
-        borderLeft: '1px solid var(--border)',
-        background: 'var(--surface)',
-        color: 'var(--text)',
-        padding: 16,
-        overflowY: 'auto',
-      }}
-    >
+    <div>
       <button
         aria-label="Close details"
         onClick={onClose}
@@ -39,10 +32,16 @@ export function DiagramDetailPanel({ node, notation, onClose }: DiagramDetailPan
       {node.techStack && node.techStack.length > 0 && (
         <section>
           <h3 style={sectionHeadingStyle}>Tech stack</h3>
-          <ul>
-            {node.techStack.map((id) => (
-              <li key={id}>{getTechIcon(id).label}</li>
-            ))}
+          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {node.techStack.map((id) => {
+              const icon = getTechIcon(id)
+              return (
+                <li key={id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TechBadge icon={icon} />
+                  {icon.label}
+                </li>
+              )
+            })}
           </ul>
         </section>
       )}
@@ -86,6 +85,6 @@ export function DiagramDetailPanel({ node, notation, onClose }: DiagramDetailPan
           </ul>
         </section>
       )}
-    </aside>
+    </div>
   )
 }
