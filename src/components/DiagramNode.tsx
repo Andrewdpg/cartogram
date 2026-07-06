@@ -2,6 +2,7 @@ import { Handle, Position } from '@xyflow/react'
 import type { DiagramNodeData } from '../lib/types'
 import { NODE_SHAPES } from './nodeShapes'
 import { getTechIcon } from '../lib/techIcons'
+import { TechBadge } from './TechBadge'
 
 export interface DiagramNodeProps {
   data: DiagramNodeData & { onOpenDetail?: (nodeId: string) => void }
@@ -27,14 +28,21 @@ export function DiagramNode({ data }: DiagramNodeProps) {
           }}
           style={{
             position: 'absolute',
-            top: -6,
-            right: -6,
-            border: 'none',
-            background: 'transparent',
+            top: -10,
+            right: -10,
+            width: 22,
+            height: 22,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            border: '1px solid var(--border)',
+            background: 'var(--surface, #1b1d24)',
+            color: 'var(--text)',
             cursor: 'pointer',
-            fontSize: 12,
+            fontSize: 11,
             lineHeight: 1,
-            padding: 2,
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
           }}
         >
           👁
@@ -46,29 +54,9 @@ export function DiagramNode({ data }: DiagramNodeProps) {
       )}
       {data.techStack && data.techStack.length > 0 && (
         <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 4 }}>
-          {data.techStack.map((id) => {
-            const icon = getTechIcon(id)
-            return (
-              <span
-                key={id}
-                title={icon.label}
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  background: icon.bg,
-                  color: icon.fg,
-                  fontSize: 8,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {icon.short}
-              </span>
-            )
-          })}
+          {data.techStack.map((id) => (
+            <TechBadge key={id} icon={getTechIcon(id)} />
+          ))}
         </div>
       )}
       <Handle type="source" position={Position.Right} />
