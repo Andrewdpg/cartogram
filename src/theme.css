@@ -10,16 +10,24 @@
   --accent: #8b93f8;
   --accent-dim: #4d4f7a;
 
-  --kind-service-fg: #8b93f8;
-  --kind-service-bg: #23253a;
-  --kind-bridge-fg: #e0a45e;
-  --kind-bridge-bg: #2c2620;
-  --kind-database-fg: #6fbf8f;
-  --kind-database-bg: #1f2b24;
+  --kind-system-fg: #7fd4c1;
+  --kind-system-bg: #0f2b26;
+  --kind-container-fg: #6fa8dc;
+  --kind-container-bg: #101f2e;
   --kind-component-fg: #c98bd6;
   --kind-component-bg: #2a2130;
+  --kind-service-fg: #8b93f8;
+  --kind-service-bg: #23253a;
+  --kind-server-fg: #d68b6a;
+  --kind-server-bg: #2c2117;
+  --kind-database-fg: #6fbf8f;
+  --kind-database-bg: #1f2b24;
+  --kind-class-fg: #e6c15c;
+  --kind-class-bg: #2c260f;
   --kind-external-fg: #9096a8;
   --kind-external-bg: #23252c;
+  --kind-bridge-fg: #e0a45e;
+  --kind-bridge-bg: #2c2620;
 
   --font-ui: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
