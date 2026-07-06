@@ -9,14 +9,14 @@ export interface DiagramNodeProps {
   data: DiagramNodeData
 }
 
-const KIND_STYLES: Record<string, { background: string; border: string }> = {
-  service: { background: '#e8f0fe', border: '#4f8cff' },
-  bridge: { background: '#fdf3e3', border: '#f5a623' },
-  database: { background: '#eaf7e3', border: '#7ed321' },
-  component: { background: '#f6e8fd', border: '#bd10e0' },
-  external: { background: '#f0f0f0', border: '#9b9b9b' },
+const KIND_STYLES: Record<string, { fg: string; bg: string }> = {
+  service: { fg: '#8b93f8', bg: '#23253a' },
+  bridge: { fg: '#e0a45e', bg: '#2c2620' },
+  database: { fg: '#6fbf8f', bg: '#1f2b24' },
+  component: { fg: '#c98bd6', bg: '#2a2130' },
+  external: { fg: '#9096a8', bg: '#23252c' },
 }
-const DEFAULT_STYLE = { background: '#f0f0f0', border: '#9b9b9b' }
+const DEFAULT_STYLE = { fg: '#9096a8', bg: '#23252c' }
 
 // ponytail: typed against our own minimal DiagramNodeProps, not
 // @xyflow/react's NodeProps — React Flow calls this with more props at
@@ -30,16 +30,31 @@ export function DiagramNode({ data }: DiagramNodeProps) {
   return (
     <div
       style={{
-        padding: '8px 12px',
-        borderRadius: 6,
-        border: `2px solid ${style.border}`,
-        background: style.background,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '10px 14px',
+        borderRadius: 8,
+        border: `1px solid ${style.fg}`,
+        background: style.bg,
+        color: '#e7e8ed',
+        fontFamily: "'Outfit', system-ui, sans-serif",
         fontSize: 13,
-        minWidth: 140,
-        textAlign: 'center',
+        fontWeight: 500,
+        minWidth: 150,
+        boxShadow: `0 2px 10px -4px ${style.fg}55`,
       }}
     >
       <Handle type="target" position={Position.Left} />
+      <span
+        style={{
+          width: 7,
+          height: 7,
+          flexShrink: 0,
+          borderRadius: '50%',
+          background: style.fg,
+        }}
+      />
       {label}
       <Handle type="source" position={Position.Right} />
     </div>

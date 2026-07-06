@@ -30,7 +30,26 @@ export function DiagramPage() {
   }, [segments])
 
   if ('notFoundId' in resolution) {
-    return <div>Diagram not found: {resolution.notFoundId}</div>
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100dvh',
+          gap: 8,
+          background: '#14151a',
+          color: '#e7e8ed',
+          fontFamily: "'Outfit', system-ui, sans-serif",
+        }}
+      >
+        <span style={{ fontSize: 15, fontWeight: 600 }}>Diagram not found</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#9096a8' }}>
+          {resolution.notFoundId}
+        </span>
+      </div>
+    )
   }
 
   const current = resolution.chain[resolution.chain.length - 1]
@@ -48,7 +67,7 @@ export function DiagramPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
       <div style={{ flex: 1 }}>
         <DiagramCanvas nodes={positionedNodes} edges={current.edges} onNodeClick={handleNodeClick} />

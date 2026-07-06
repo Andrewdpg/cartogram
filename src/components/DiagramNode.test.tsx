@@ -23,12 +23,12 @@ describe('DiagramNode', () => {
   it('applies the known style for kind "service"', () => {
     renderNode('service')
     const el = screen.getByText('My Node').closest('div')
-    expect(el).toHaveStyle({ borderColor: '#4f8cff' })
+    expect(el).toHaveStyle({ borderColor: '#8b93f8' })
   })
 
   it('falls back to the default style for an unknown kind', () => {
     renderNode('something-new')
     const el = screen.getByText('My Node').closest('div')
-    expect(el).toHaveStyle({ borderColor: '#9b9b9b' })
+    expect(el).toHaveStyle({ borderColor: '#9096a8' })
   })
 })

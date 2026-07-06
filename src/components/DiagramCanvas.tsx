@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { ReactFlow, ReactFlowProvider, Background, Controls, type Node, type Edge } from '@xyflow/react'
+import { ReactFlow, ReactFlowProvider, Background, BackgroundVariant, Controls, type Node, type Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { DiagramNode } from './DiagramNode'
 import type { PositionedNode } from '../lib/autoLayout'
@@ -30,10 +30,13 @@ export function DiagramCanvas({ nodes, edges, onNodeClick }: DiagramCanvasProps)
     source: e.from,
     target: e.to,
     label: e.label,
+    labelStyle: { fill: '#9096a8', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
+    labelBgStyle: { fill: '#1b1d24' },
+    style: { stroke: '#3a3e4b' },
   }))
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', background: '#14151a' }}>
       <ReactFlowProvider>
         <ReactFlow
           nodes={flowNodes}
@@ -41,9 +44,10 @@ export function DiagramCanvas({ nodes, edges, onNodeClick }: DiagramCanvasProps)
           nodeTypes={nodeTypes}
           onNodeClick={(_, node) => onNodeClick(node.id)}
           fitView
+          defaultEdgeOptions={{ style: { stroke: '#3a3e4b' } }}
         >
-          <Background />
-          <Controls />
+          <Background variant={BackgroundVariant.Dots} color="#2d303b" gap={20} />
+          <Controls style={{ filter: 'invert(0.9) hue-rotate(180deg)' }} />
         </ReactFlow>
       </ReactFlowProvider>
     </div>
