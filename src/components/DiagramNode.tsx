@@ -1,62 +1,77 @@
 import { Handle, Position } from '@xyflow/react'
-
-export interface DiagramNodeData {
-  label: string
-  kind: string
-}
+import type { DiagramNodeData } from '../lib/types'
+import { NODE_SHAPES } from './nodeShapes'
+import { getTechIcon } from '../lib/techIcons'
 
 export interface DiagramNodeProps {
-  data: DiagramNodeData
+  data: DiagramNodeData & { onOpenDetail?: (nodeId: string) => void }
 }
 
-const KIND_STYLES: Record<string, { fg: string; bg: string }> = {
-  service: { fg: '#8b93f8', bg: '#23253a' },
-  bridge: { fg: '#e0a45e', bg: '#2c2620' },
-  database: { fg: '#6fbf8f', bg: '#1f2b24' },
-  component: { fg: '#c98bd6', bg: '#2a2130' },
-  external: { fg: '#9096a8', bg: '#23252c' },
-}
-const DEFAULT_STYLE = { fg: '#9096a8', bg: '#23252c' }
-
-// ponytail: typed against our own minimal DiagramNodeProps, not
-// @xyflow/react's NodeProps — React Flow calls this with more props at
-// runtime (id, selected, dragging, ...), which we simply don't declare or
-// use. Avoids coupling to a type shape that has changed across major
-// versions of the library.
+// ponytail: typed against our own DiagramNodeData, not @xyflow/react's
+// NodeProps — React Flow calls this with more props at runtime (id,
+// selected, dragging, ...), which we simply don't declare or use. Avoids
+// coupling to a type shape that has changed across major versions of the
+// library.
 export function DiagramNode({ data }: DiagramNodeProps) {
-  const { label, kind } = data
-  const style = KIND_STYLES[kind] ?? DEFAULT_STYLE
+  const Shape = NODE_SHAPES[data.kind]
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '10px 14px',
-        borderRadius: 8,
-        border: `1px solid ${style.fg}`,
-        background: style.bg,
-        color: '#e7e8ed',
-        fontFamily: "'Outfit', system-ui, sans-serif",
-        fontSize: 13,
-        fontWeight: 500,
-        minWidth: 150,
-        boxShadow: `0 2px 10px -4px ${style.fg}55`,
-      }}
-    >
+    <Shape node={data}>
       <Handle type="target" position={Position.Left} />
-      <span
-        style={{
-          width: 7,
-          height: 7,
-          flexShrink: 0,
-          borderRadius: '50%',
-          background: style.fg,
-        }}
-      />
-      {label}
+      {data.onOpenDetail && (
+        <button
+          aria-label={`View details for ${data.label}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            data.onOpenDetail?.(data.id)
+          }}
+          style={{
+            position: 'absolute',
+            top: -6,
+            right: -6,
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            fontSize: 12,
+            lineHeight: 1,
+            padding: 2,
+          }}
+        >
+          👁
+        </button>
+      )}
+      <span style={{ fontWeight: 600, fontSize: 13 }}>{data.label}</span>
+      {data.responsibility && (
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{data.responsibility}</span>
+      )}
+      {data.techStack && data.techStack.length > 0 && (
+        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 4 }}>
+          {data.techStack.map((id) => {
+            const icon = getTechIcon(id)
+            return (
+              <span
+                key={id}
+                title={icon.label}
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: icon.bg,
+                  color: icon.fg,
+                  fontSize: 8,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {icon.short}
+              </span>
+            )
+          })}
+        </div>
+      )}
       <Handle type="source" position={Position.Right} />
-    </div>
+    </Shape>
   )
 }
