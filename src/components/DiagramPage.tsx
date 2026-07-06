@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { loadDiagram } from '../lib/loadDiagram'
 import { resolveDiagramPath } from '../lib/resolveDiagramPath'
@@ -7,6 +7,7 @@ import type { Diagram } from '../lib/types'
 import { layoutDiagram } from '../lib/autoLayout'
 import { DiagramCanvas } from './DiagramCanvas'
 import { Breadcrumb } from './Breadcrumb'
+import { DiagramDetailPanel } from './DiagramDetailPanel'
 
 type Resolution = { chain: Diagram[] } | { notFoundId: string }
 
@@ -17,6 +18,7 @@ export function DiagramPage() {
     () => (params['*'] ?? '').split('/').filter(Boolean),
     [params['*']]
   )
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
 
   const resolution: Resolution = useMemo(() => {
     try {
@@ -55,6 +57,7 @@ export function DiagramPage() {
   const current = resolution.chain[resolution.chain.length - 1]
   const positionedNodes = layoutDiagram(current.nodes, current.edges)
   const labels = ['Home', ...resolution.chain.slice(1).map((d) => d.title)]
+  const selectedNode = current.nodes.find((n) => n.id === selectedNodeId) ?? null
 
   function handleNodeClick(nodeId: string) {
     const node = current.nodes.find((n) => n.id === nodeId)
@@ -63,14 +66,27 @@ export function DiagramPage() {
   }
 
   function handleBreadcrumbNavigate(index: number) {
+    setSelectedNodeId(null)
     navigate(`/${segments.slice(0, index).join('/')}`)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
-      <div style={{ flex: 1 }}>
-        <DiagramCanvas nodes={positionedNodes} edges={current.edges} onNodeClick={handleNodeClick} />
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        <div style={{ flex: 1 }}>
+          <DiagramCanvas
+            nodes={positionedNodes}
+            edges={current.edges}
+            onNodeClick={handleNodeClick}
+            onNodeDetailRequest={setSelectedNodeId}
+          />
+        </div>
+        <DiagramDetailPanel
+          node={selectedNode}
+          notation={current.notation ?? 'c4'}
+          onClose={() => setSelectedNodeId(null)}
+        />
       </div>
     </div>
   )
