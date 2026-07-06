@@ -1,3 +1,33 @@
 node_modules
 dist
+dist-ssr
 *.local
+
+# build/typecheck byproducts
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# vite/vitest caches
+.vite
+.vitest-cache
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editor/OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# env
+.env
+.env.*
+!.env.example
+
+# SDD scratch workspace (already self-ignoring, belt and suspenders)
+.superpowers/
