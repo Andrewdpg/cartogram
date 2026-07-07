@@ -115,3 +115,16 @@ export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): Rou
 
   return { edgeRouting, nodeHandles }
 }
+
+// ponytail: the exact string a caller should key a "re-measure handles now"
+// effect on. Deliberately encodes every handle's id/side/offset per node,
+// NOT just which node ids have handles — a real bug shipped here once
+// already because the effect was keyed on the node-id set alone, which
+// stays identical across a drag even when the SAME nodes' handle ids/offsets
+// get reshuffled (the far more common case than a node gaining/losing
+// handles outright).
+export function computeHandleSignature(nodeHandles: Map<string, HandlePlacement[]>): string {
+  return [...nodeHandles.entries()]
+    .map(([nodeId, placements]) => `${nodeId}:${placements.map((p) => `${p.id}|${p.side}|${p.offsetFraction}`).join(',')}`)
+    .join(';')
+}

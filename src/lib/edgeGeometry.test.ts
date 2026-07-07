@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeEdgeRouting } from './edgeGeometry'
+import { computeEdgeRouting, computeHandleSignature } from './edgeGeometry'
 
 const SIZE = { width: 180, height: 60 }
 
@@ -113,6 +113,37 @@ describe('computeEdgeRouting', () => {
     const bLeftHandles = nodeHandles.get('b')!.filter((h) => h.side === 'left')
     expect(bLeftHandles).toHaveLength(2)
     expect(new Set(bLeftHandles.map((h) => h.offsetFraction)).size).toBe(2)
+  })
+
+  it('computeHandleSignature changes when a drag reshuffles offsets even though the same nodes still have handles', () => {
+    // Node c starts far below b, so a's two edges land on different sides
+    // (b via right, c via bottom). After "moving" c up next to b (second
+    // layout), both become right-side edges on a and must share/reshuffle
+    // that side's offsets — same two node ids have handles in both layouts,
+    // but the actual placements differ, and the signature must say so.
+    const edges = [
+      { id: 'a->b', from: 'a', to: 'b' },
+      { id: 'a->c', from: 'a', to: 'c' },
+    ]
+    const before = computeEdgeRouting(
+      [
+        { id: 'a', x: 0, y: 0, ...SIZE },
+        { id: 'b', x: 200, y: 0, ...SIZE },
+        { id: 'c', x: 20, y: 300, ...SIZE },
+      ],
+      edges
+    )
+    const after = computeEdgeRouting(
+      [
+        { id: 'a', x: 0, y: 0, ...SIZE },
+        { id: 'b', x: 200, y: 0, ...SIZE },
+        { id: 'c', x: 200, y: 15, ...SIZE },
+      ],
+      edges
+    )
+
+    expect([...before.nodeHandles.keys()].sort()).toEqual([...after.nodeHandles.keys()].sort())
+    expect(computeHandleSignature(before.nodeHandles)).not.toBe(computeHandleSignature(after.nodeHandles))
   })
 
   it('does not crash on an edge referencing an unknown node id (defensive — validation happens elsewhere)', () => {
