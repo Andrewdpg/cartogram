@@ -53,29 +53,35 @@ function pickSide(dx: number, dy: number, halfWidth: number, halfHeight: number)
 interface SideGroup {
   nodeId: string
   side: Side
-  type: 'source' | 'target'
-  handleIds: string[]
+  // ponytail: source and target handles on the SAME side of the SAME node
+  // must be spread together, not in separate groups — a cyclic pair (A→B
+  // and B→A) puts one source handle and one target handle on the same side
+  // of each node. Grouping by (node, side, type) would independently center
+  // each single-member group at the side's midpoint, landing both handles
+  // on the exact same point and making two edges look like one.
+  handles: Array<{ id: string; type: 'source' | 'target' }>
 }
 
 /**
  * Computes, for every edge, which side of its source/target node it should
  * connect to, and a distinct handle id per edge so multiple edges sharing
- * the same (node, side) get spread evenly along it instead of stacking on
- * the exact same point.
+ * the same (node, side) — regardless of whether they're incoming or
+ * outgoing — get spread evenly along it instead of stacking on the exact
+ * same point.
  */
 export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): RoutingResult {
   const positionById = new Map(nodes.map((n) => [n.id, n]))
   const sideGroups = new Map<string, SideGroup>()
 
   function registerHandle(nodeId: string, side: Side, type: 'source' | 'target'): string {
-    const key = `${nodeId}|${side}|${type}`
+    const key = `${nodeId}|${side}`
     let group = sideGroups.get(key)
     if (!group) {
-      group = { nodeId, side, type, handleIds: [] }
+      group = { nodeId, side, handles: [] }
       sideGroups.set(key, group)
     }
-    const handleId = `${key}#${group.handleIds.length}`
-    group.handleIds.push(handleId)
+    const handleId = `${key}|${type}#${group.handles.length}`
+    group.handles.push({ id: handleId, type })
     return handleId
   }
 
@@ -96,12 +102,12 @@ export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): Rou
   const nodeHandles = new Map<string, HandlePlacement[]>()
   for (const group of sideGroups.values()) {
     const placements = nodeHandles.get(group.nodeId) ?? []
-    group.handleIds.forEach((handleId, i) => {
+    group.handles.forEach((h, i) => {
       placements.push({
-        id: handleId,
-        type: group.type,
+        id: h.id,
+        type: h.type,
         side: group.side,
-        offsetFraction: (i + 1) / (group.handleIds.length + 1),
+        offsetFraction: (i + 1) / (group.handles.length + 1),
       })
     })
     nodeHandles.set(group.nodeId, placements)

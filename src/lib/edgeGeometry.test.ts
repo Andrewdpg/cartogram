@@ -92,6 +92,29 @@ describe('computeEdgeRouting', () => {
     expect(new Set(offsets).size).toBe(3)
   })
 
+  it('spreads a cyclic pair (A->B and B->A) to distinct points, not the same one on each side', () => {
+    const nodes = [
+      { id: 'a', x: 0, y: 0, ...SIZE },
+      { id: 'b', x: 200, y: 0, ...SIZE },
+    ]
+    const edges = [
+      { id: 'a->b', from: 'a', to: 'b' },
+      { id: 'b->a', from: 'b', to: 'a' },
+    ]
+
+    const { nodeHandles } = computeEdgeRouting(nodes, edges)
+
+    // a's right side now carries BOTH the outgoing a->b source handle and
+    // the incoming b->a target handle — they must not share an offset.
+    const aRightHandles = nodeHandles.get('a')!.filter((h) => h.side === 'right')
+    expect(aRightHandles).toHaveLength(2)
+    expect(new Set(aRightHandles.map((h) => h.offsetFraction)).size).toBe(2)
+
+    const bLeftHandles = nodeHandles.get('b')!.filter((h) => h.side === 'left')
+    expect(bLeftHandles).toHaveLength(2)
+    expect(new Set(bLeftHandles.map((h) => h.offsetFraction)).size).toBe(2)
+  })
+
   it('does not crash on an edge referencing an unknown node id (defensive — validation happens elsewhere)', () => {
     const nodes = [{ id: 'a', x: 0, y: 0, ...SIZE }]
     const edges = [{ id: 'a->ghost', from: 'a', to: 'ghost' }]

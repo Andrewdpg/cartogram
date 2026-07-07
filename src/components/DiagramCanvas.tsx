@@ -39,20 +39,6 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
   // (different node ids), not on every parent render.
   const diagramKey = useMemo(() => JSON.stringify(nodes), [nodes])
 
-  // ponytail: computed once per diagram (keyed the same as diagramKey below)
-  // — assigns each edge to a side of its source/target node and spreads
-  // edges sharing a (node, side) across distinct points, instead of every
-  // edge fighting for the same fixed left/right anchor. See edgeGeometry.ts.
-  const routing = useMemo(
-    () =>
-      computeEdgeRouting(
-        nodes.map((n) => ({ id: n.id, x: n.x, y: n.y, ...estimateNodeSize(n) })),
-        edges.map((e) => ({ id: `${e.from}->${e.to}`, from: e.from, to: e.to }))
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [diagramKey]
-  )
-
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node>([])
 
   useEffect(() => {
@@ -71,13 +57,39 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
           attributes: n.attributes,
           operations: n.operations,
           onOpenDetail: onNodeDetailRequest,
-          handlePlacements: routing.nodeHandles.get(n.id) ?? [],
         },
         type: 'diagramNode',
       }))
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diagramKey, onNodeDetailRequest, routing])
+  }, [diagramKey, onNodeDetailRequest])
+
+  // ponytail: recomputed from `flowNodes`' LIVE positions (not the static
+  // `nodes` prop) so dragging a box re-evaluates which side is actually
+  // closest — keyed on a position-signature string, not the flowNodes array
+  // reference, so it only recomputes when a position value actually changes.
+  // Deliberately NOT stored back into flowNodes via a `setFlowNodes` effect:
+  // that would make routing depend on flowNodes and flowNodes depend on
+  // routing's output, ping-ponging forever. Instead it's merged into the
+  // node list at render time, below.
+  const positionSignature = flowNodes.map((n) => `${n.id}:${n.position.x}:${n.position.y}`).join('|')
+  const routing = useMemo(() => {
+    const sized = flowNodes.map((n) => {
+      const original = nodes.find((orig) => orig.id === n.id)
+      const size = original ? estimateNodeSize(original) : { width: 180, height: 60 }
+      return { id: n.id, x: n.position.x, y: n.position.y, ...size }
+    })
+    return computeEdgeRouting(
+      sized,
+      edges.map((e) => ({ id: `${e.from}->${e.to}`, from: e.from, to: e.to }))
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positionSignature, edges, nodes])
+
+  const renderedNodes: Node[] = flowNodes.map((n) => ({
+    ...n,
+    data: { ...n.data, handlePlacements: routing.nodeHandles.get(n.id) ?? [] },
+  }))
 
   const flowEdges = buildFlowEdges(edges, routing)
 
@@ -86,7 +98,7 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
       <UmlMarkerDefs />
       <ReactFlowProvider>
         <ReactFlow
-          nodes={flowNodes}
+          nodes={renderedNodes}
           edges={flowEdges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
