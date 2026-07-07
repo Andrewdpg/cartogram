@@ -115,6 +115,35 @@ describe('computeEdgeRouting', () => {
     expect(new Set(bLeftHandles.map((h) => h.offsetFraction)).size).toBe(2)
   })
 
+  it('orders handles on a side by the position of what they connect to, not by authoring/insertion order', () => {
+    // d is authored first but sits at the bottom; b is authored second but
+    // sits at the top; c is in the middle. All three are far enough right
+    // that a's closest side to each is 'right'. Offsets must come out sorted
+    // top-to-bottom (b, c, d) regardless of the a->d / a->b / a->c order
+    // they were declared in — that's what keeps a straight, non-crossing
+    // fan of lines instead of one that zigzags to match declaration order.
+    const nodes = [
+      { id: 'a', x: 0, y: 100, ...SIZE },
+      { id: 'b', x: 200, y: 80, ...SIZE },
+      { id: 'c', x: 200, y: 100, ...SIZE },
+      { id: 'd', x: 200, y: 120, ...SIZE },
+    ]
+    const edges = [
+      { id: 'a->d', from: 'a', to: 'd' },
+      { id: 'a->b', from: 'a', to: 'b' },
+      { id: 'a->c', from: 'a', to: 'c' },
+    ]
+
+    const { edgeRouting, nodeHandles } = computeEdgeRouting(nodes, edges)
+    const aHandles = nodeHandles.get('a')!.filter((h) => h.side === 'right')
+
+    const handleToEdge = new Map(edgeRouting.map((r) => [r.sourceHandle, r.edgeId]))
+    const orderedByOffset = [...aHandles].sort((x, y) => x.offsetFraction - y.offsetFraction)
+    const edgeIdsInOffsetOrder = orderedByOffset.map((h) => handleToEdge.get(h.id))
+
+    expect(edgeIdsInOffsetOrder).toEqual(['a->b', 'a->c', 'a->d'])
+  })
+
   it('computeHandleSignature changes when a drag reshuffles offsets even though the same nodes still have handles', () => {
     // Node c starts far below b, so a's two edges land on different sides
     // (b via right, c via bottom). After "moving" c up next to b (second

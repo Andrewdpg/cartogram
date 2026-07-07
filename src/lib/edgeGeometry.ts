@@ -59,7 +59,15 @@ interface SideGroup {
   // of each node. Grouping by (node, side, type) would independently center
   // each single-member group at the side's midpoint, landing both handles
   // on the exact same point and making two edges look like one.
-  handles: Array<{ id: string; type: 'source' | 'target' }>
+  //
+  // `otherX`/`otherY` (the position of the node at the OTHER end of this
+  // specific edge) are carried along so offsets can be assigned by that
+  // node's actual position, not insertion order — insertion order grouped
+  // all outgoing handles before all incoming ones (edges are usually
+  // authored that way), so a cyclic pair's two lines landed far apart on the
+  // side instead of next to each other, crossing every unrelated line in
+  // between for no geometric reason.
+  handles: Array<{ id: string; type: 'source' | 'target'; otherX: number; otherY: number }>
 }
 
 /**
@@ -73,7 +81,12 @@ export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): Rou
   const positionById = new Map(nodes.map((n) => [n.id, n]))
   const sideGroups = new Map<string, SideGroup>()
 
-  function registerHandle(nodeId: string, side: Side, type: 'source' | 'target'): string {
+  function registerHandle(
+    nodeId: string,
+    side: Side,
+    type: 'source' | 'target',
+    other: NodePosition
+  ): string {
     const key = `${nodeId}|${side}`
     let group = sideGroups.get(key)
     if (!group) {
@@ -81,7 +94,7 @@ export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): Rou
       sideGroups.set(key, group)
     }
     const handleId = `${key}|${type}#${group.handles.length}`
-    group.handles.push({ id: handleId, type })
+    group.handles.push({ id: handleId, type, otherX: other.x, otherY: other.y })
     return handleId
   }
 
@@ -94,20 +107,31 @@ export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): Rou
 
     const sourceSide = pickSide(to.x - from.x, to.y - from.y, from.width / 2, from.height / 2)
     const targetSide = pickSide(from.x - to.x, from.y - to.y, to.width / 2, to.height / 2)
-    const sourceHandle = registerHandle(edge.from, sourceSide, 'source')
-    const targetHandle = registerHandle(edge.to, targetSide, 'target')
+    const sourceHandle = registerHandle(edge.from, sourceSide, 'source', to)
+    const targetHandle = registerHandle(edge.to, targetSide, 'target', from)
     edgeRouting.push({ edgeId: edge.id, sourceHandle, targetHandle })
   }
 
   const nodeHandles = new Map<string, HandlePlacement[]>()
   for (const group of sideGroups.values()) {
+    // Order handles by the position of whatever they connect to, along the
+    // axis that runs ALONG this side (left/right sides run vertically, so
+    // sort by the other node's y; top/bottom sides run horizontally, so sort
+    // by x) — this is what actually avoids needless crossings, and as a
+    // side effect keeps a cyclic pair's two lines (same "other" node)
+    // adjacent to each other instead of split apart by insertion order.
+    const sorted = [...group.handles].sort((a, b) => {
+      const aKey = group.side === 'left' || group.side === 'right' ? a.otherY : a.otherX
+      const bKey = group.side === 'left' || group.side === 'right' ? b.otherY : b.otherX
+      return aKey - bKey
+    })
     const placements = nodeHandles.get(group.nodeId) ?? []
-    group.handles.forEach((h, i) => {
+    sorted.forEach((h, i) => {
       placements.push({
         id: h.id,
         type: h.type,
         side: group.side,
-        offsetFraction: (i + 1) / (group.handles.length + 1),
+        offsetFraction: (i + 1) / (sorted.length + 1),
       })
     })
     nodeHandles.set(group.nodeId, placements)
