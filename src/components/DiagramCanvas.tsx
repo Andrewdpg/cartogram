@@ -7,7 +7,10 @@ import {
   BackgroundVariant,
   Controls,
   useNodesState,
+  useUpdateNodeInternals,
+  type Edge,
   type Node,
+  type OnNodesChange,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { DiagramNode } from './DiagramNode'
@@ -29,6 +32,47 @@ export interface DiagramCanvasProps {
   edges: DiagramEdgeData[]
   onNodeClick: (nodeId: string) => void
   onNodeDetailRequest?: (nodeId: string) => void
+}
+
+interface DiagramFlowProps {
+  renderedNodes: Node[]
+  flowEdges: Edge[]
+  onNodesChange: OnNodesChange
+  onNodeClick: (nodeId: string) => void
+  handleNodeIds: string[]
+}
+
+// ponytail: `useUpdateNodeInternals` only works inside <ReactFlowProvider>,
+// so this has to be a child component, not called directly in DiagramCanvas
+// (which is the one rendering the provider). Whenever a node's handle SET
+// changes (a drag moves an edge from, say, its left side to its top side),
+// React Flow keeps stale bounds for the old handle id until told to
+// re-measure — without this, edges referencing the new handle id silently
+// fail to render (this is React Flow's documented "dynamic handles" gotcha).
+function DiagramFlow({ renderedNodes, flowEdges, onNodesChange, onNodeClick, handleNodeIds }: DiagramFlowProps) {
+  const updateNodeInternals = useUpdateNodeInternals()
+
+  useEffect(() => {
+    for (const nodeId of handleNodeIds) {
+      updateNodeInternals(nodeId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleNodeIds.join('|'), updateNodeInternals])
+
+  return (
+    <ReactFlow
+      nodes={renderedNodes}
+      edges={flowEdges}
+      nodeTypes={nodeTypes}
+      onNodesChange={onNodesChange}
+      onNodeClick={(_, node) => onNodeClick(node.id)}
+      fitView
+      defaultEdgeOptions={{ style: { stroke: '#3a3e4b' } }}
+    >
+      <Background variant={BackgroundVariant.Dots} color="#2d303b" gap={20} />
+      <Controls style={{ filter: 'invert(0.9) hue-rotate(180deg)' }} />
+    </ReactFlow>
+  )
 }
 
 export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }: DiagramCanvasProps) {
@@ -97,18 +141,13 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
     <div style={{ width: '100%', height: '100%', background: '#14151a' }}>
       <UmlMarkerDefs />
       <ReactFlowProvider>
-        <ReactFlow
-          nodes={renderedNodes}
-          edges={flowEdges}
-          nodeTypes={nodeTypes}
+        <DiagramFlow
+          renderedNodes={renderedNodes}
+          flowEdges={flowEdges}
           onNodesChange={onNodesChange}
-          onNodeClick={(_, node) => onNodeClick(node.id)}
-          fitView
-          defaultEdgeOptions={{ style: { stroke: '#3a3e4b' } }}
-        >
-          <Background variant={BackgroundVariant.Dots} color="#2d303b" gap={20} />
-          <Controls style={{ filter: 'invert(0.9) hue-rotate(180deg)' }} />
-        </ReactFlow>
+          onNodeClick={onNodeClick}
+          handleNodeIds={[...routing.nodeHandles.keys()]}
+        />
       </ReactFlowProvider>
     </div>
   )
