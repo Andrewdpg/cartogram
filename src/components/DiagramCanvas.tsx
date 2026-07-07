@@ -8,11 +8,12 @@ import {
   Controls,
   useNodesState,
   type Node,
-  type Edge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { DiagramNode } from './DiagramNode'
-import { RELATIONSHIP_MARKER_IDS, UmlMarkerDefs } from './umlMarkers'
+import { UmlMarkerDefs } from './umlMarkers'
+import { buildFlowEdges } from './buildFlowEdges'
+import { computeEdgeRouting } from '../lib/edgeGeometry'
 import type { PositionedNode } from '../lib/autoLayout'
 import type { DiagramEdgeData } from '../lib/types'
 
@@ -29,15 +30,6 @@ export interface DiagramCanvasProps {
   onNodeDetailRequest?: (nodeId: string) => void
 }
 
-function buildEdgeLabel(e: DiagramEdgeData): string | undefined {
-  const parts = [
-    e.order !== undefined ? `${e.order}.` : null,
-    e.label ?? null,
-    e.condition ? `[${e.condition}]` : null,
-  ].filter((part): part is string => part !== null)
-  return parts.length > 0 ? parts.join(' ') : undefined
-}
-
 export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }: DiagramCanvasProps) {
   // ponytail: React Flow needs its own node state to keep drag positions —
   // passing a freshly-computed `nodes` array straight into `<ReactFlow>`
@@ -45,6 +37,16 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
   // opening the detail panel). Re-seed only when the diagram itself changes
   // (different node ids), not on every parent render.
   const diagramKey = useMemo(() => JSON.stringify(nodes), [nodes])
+
+  // ponytail: computed once per diagram (keyed the same as diagramKey below)
+  // — assigns each edge to a side of its source/target node and spreads
+  // edges sharing a (node, side) across distinct points, instead of every
+  // edge fighting for the same fixed left/right anchor. See edgeGeometry.ts.
+  const routing = useMemo(
+    () => computeEdgeRouting(nodes, edges.map((e) => ({ id: `${e.from}->${e.to}`, from: e.from, to: e.to }))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [diagramKey]
+  )
 
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node>([])
 
@@ -64,27 +66,15 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
           attributes: n.attributes,
           operations: n.operations,
           onOpenDetail: onNodeDetailRequest,
+          handlePlacements: routing.nodeHandles.get(n.id) ?? [],
         },
         type: 'diagramNode',
       }))
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diagramKey, onNodeDetailRequest])
+  }, [diagramKey, onNodeDetailRequest, routing])
 
-  const flowEdges: Edge[] = edges.map((e) => {
-    const markerId = e.relationship ? RELATIONSHIP_MARKER_IDS[e.relationship] : undefined
-    const dashed = e.relationship === 'dependency' || e.async === true
-    return {
-      id: `${e.from}->${e.to}`,
-      source: e.from,
-      target: e.to,
-      label: buildEdgeLabel(e),
-      markerEnd: markerId ? `url(#${markerId})` : undefined,
-      style: { stroke: '#3a3e4b', strokeDasharray: dashed ? '4 3' : undefined },
-      labelStyle: { fill: '#9096a8', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
-      labelBgStyle: { fill: '#1b1d24' },
-    }
-  })
+  const flowEdges = buildFlowEdges(edges, routing)
 
   return (
     <div style={{ width: '100%', height: '100%', background: '#14151a' }}>

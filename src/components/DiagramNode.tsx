@@ -1,11 +1,19 @@
 import { Handle, Position } from '@xyflow/react'
 import type { DiagramNodeData } from '../lib/types'
+import type { HandlePlacement, Side } from '../lib/edgeGeometry'
 import { NODE_SHAPES } from './nodeShapes'
 import { getTechIcon } from '../lib/techIcons'
 import { TechBadge } from './TechBadge'
 
 export interface DiagramNodeProps {
-  data: DiagramNodeData & { onOpenDetail?: (nodeId: string) => void }
+  data: DiagramNodeData & { onOpenDetail?: (nodeId: string) => void; handlePlacements?: HandlePlacement[] }
+}
+
+const SIDE_TO_POSITION: Record<Side, Position> = {
+  top: Position.Top,
+  right: Position.Right,
+  bottom: Position.Bottom,
+  left: Position.Left,
 }
 
 // ponytail: typed against our own DiagramNodeData, not @xyflow/react's
@@ -15,10 +23,23 @@ export interface DiagramNodeProps {
 // library.
 export function DiagramNode({ data }: DiagramNodeProps) {
   const Shape = NODE_SHAPES[data.kind]
+  const placements = data.handlePlacements ?? []
 
   return (
     <Shape node={data}>
-      <Handle type="target" position={Position.Left} />
+      {placements.map((p) => (
+        <Handle
+          key={p.id}
+          id={p.id}
+          type={p.type}
+          position={SIDE_TO_POSITION[p.side]}
+          style={
+            p.side === 'left' || p.side === 'right'
+              ? { top: `${p.offsetFraction * 100}%`, transform: 'translateY(-50%)' }
+              : { left: `${p.offsetFraction * 100}%`, transform: 'translateX(-50%)' }
+          }
+        />
+      ))}
       {data.onOpenDetail && (
         <button
           aria-label={`View details for ${data.label}`}
@@ -59,7 +80,6 @@ export function DiagramNode({ data }: DiagramNodeProps) {
           ))}
         </div>
       )}
-      <Handle type="source" position={Position.Right} />
     </Shape>
   )
 }

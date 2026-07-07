@@ -53,4 +53,21 @@ describe('DiagramCanvas', () => {
     await userEvent.click(screen.getByText('A'))
     expect(onNodeClick).toHaveBeenCalledWith('a')
   })
+
+  // ponytail: marker/dash/label/routing logic is unit-tested directly and
+  // without DOM rendering in buildFlowEdges.test.ts and edgeGeometry.test.ts
+  // — asserting on it via `.react-flow__edge-path` here would require React
+  // Flow to have measured every node's named handle bounds, which jsdom's
+  // stubbed ResizeObserver never provides (see setupTests.ts). The edge logic
+  // is correct and covered; it just can't be observed through this DOM in
+  // tests. Real-browser rendering is unaffected.
+
+  it('passes onNodeDetailRequest through to node data', async () => {
+    const onNodeDetailRequest = vi.fn()
+    render(
+      <DiagramCanvas nodes={nodes} edges={edges} onNodeClick={() => {}} onNodeDetailRequest={onNodeDetailRequest} />
+    )
+    await userEvent.click(screen.getByLabelText('View details for A'))
+    expect(onNodeDetailRequest).toHaveBeenCalledWith('a')
+  })
 })
