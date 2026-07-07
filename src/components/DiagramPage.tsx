@@ -46,13 +46,13 @@ export function DiagramPage() {
           justifyContent: 'center',
           height: '100dvh',
           gap: 8,
-          background: '#14151a',
-          color: '#e7e8ed',
-          fontFamily: "'Outfit', system-ui, sans-serif",
+          background: 'var(--bg)',
+          color: 'var(--text)',
+          fontFamily: 'var(--font-ui)',
         }}
       >
         <span style={{ fontSize: 15, fontWeight: 600 }}>Diagram not found</span>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#9096a8' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-muted)' }}>
           {resolution.notFoundId}
         </span>
       </div>

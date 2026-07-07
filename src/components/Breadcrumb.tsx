@@ -12,8 +12,8 @@ export function Breadcrumb({ labels, onNavigate }: BreadcrumbProps) {
         alignItems: 'center',
         gap: 4,
         padding: '10px 16px',
-        background: '#1b1d24',
-        borderBottom: '1px solid #2d303b',
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--border)',
         fontSize: 13,
       }}
     >
@@ -21,7 +21,7 @@ export function Breadcrumb({ labels, onNavigate }: BreadcrumbProps) {
         const isCurrent = index === labels.length - 1
         return (
           <span key={index} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {index > 0 && <span style={{ color: '#5c6273' }}>/</span>}
+            {index > 0 && <span style={{ color: 'var(--text-faint)' }}>/</span>}
             <button
               onClick={() => onNavigate(index)}
               disabled={isCurrent}
@@ -29,15 +29,15 @@ export function Breadcrumb({ labels, onNavigate }: BreadcrumbProps) {
                 border: 'none',
                 background: 'none',
                 padding: '4px 6px',
-                borderRadius: 4,
+                borderRadius: 'var(--radius-sm)',
                 font: 'inherit',
-                color: isCurrent ? '#e7e8ed' : '#9096a8',
+                color: isCurrent ? 'var(--text)' : 'var(--text-muted)',
                 fontWeight: isCurrent ? 600 : 400,
                 cursor: isCurrent ? 'default' : 'pointer',
-                transition: 'color 150ms, background 150ms',
+                transition: 'color var(--transition), background var(--transition)',
               }}
               onMouseEnter={(e) => {
-                if (!isCurrent) e.currentTarget.style.background = '#22252e'
+                if (!isCurrent) e.currentTarget.style.background = 'var(--surface-raised)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'none'

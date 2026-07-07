@@ -73,10 +73,10 @@ function DiagramFlow({ renderedNodes, flowEdges, onNodesChange, onNodeClick, han
       onNodesChange={onNodesChange}
       onNodeClick={(_, node) => onNodeClick(node.id)}
       fitView
-      defaultEdgeOptions={{ style: { stroke: '#3a3e4b' } }}
+      defaultEdgeOptions={{ style: { stroke: 'var(--edge-stroke)' } }}
     >
-      <Background variant={BackgroundVariant.Dots} color="#2d303b" gap={20} />
-      <Controls style={{ filter: 'invert(0.9) hue-rotate(180deg)' }} />
+      <Background variant={BackgroundVariant.Dots} color="var(--border)" gap={20} />
+      <Controls style={{ filter: 'invert(0.9) hue-rotate(220deg) saturate(0.6)' }} />
     </ReactFlow>
   )
 }
@@ -146,7 +146,7 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
   const handleSignature = computeHandleSignature(routing.nodeHandles)
 
   return (
-    <div style={{ width: '100%', height: '100%', background: '#14151a' }}>
+    <div style={{ width: '100%', height: '100%', background: 'var(--bg)' }}>
       <UmlMarkerDefs />
       <ReactFlowProvider>
         <DiagramFlow

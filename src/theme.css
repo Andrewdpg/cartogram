@@ -1,33 +1,43 @@
 :root {
-  --bg: #14151a;
-  --surface: #1b1d24;
-  --surface-raised: #22252e;
-  --border: #2d303b;
-  --border-strong: #3a3e4b;
-  --text: #e7e8ed;
-  --text-muted: #9096a8;
-  --text-faint: #5c6273;
-  --accent: #8b93f8;
-  --accent-dim: #4d4f7a;
+  --bg: #16151b;
+  --surface: #1c1b23;
+  --surface-raised: #24232d;
+  --border: #322f3c;
+  --border-strong: #423e50;
+  --text: #ece9f3;
+  --text-muted: #9d97ae;
+  --text-faint: #67617a;
+  --accent: #b3aef2;
+  --accent-dim: #4c4870;
 
-  --kind-system-fg: #7fd4c1;
-  --kind-system-bg: #0f2b26;
-  --kind-container-fg: #6fa8dc;
-  --kind-container-bg: #101f2e;
-  --kind-component-fg: #c98bd6;
-  --kind-component-bg: #2a2130;
-  --kind-service-fg: #8b93f8;
-  --kind-service-bg: #23253a;
-  --kind-server-fg: #d68b6a;
-  --kind-server-bg: #2c2117;
-  --kind-database-fg: #6fbf8f;
-  --kind-database-bg: #1f2b24;
-  --kind-class-fg: #e6c15c;
-  --kind-class-bg: #2c260f;
-  --kind-external-fg: #9096a8;
-  --kind-external-bg: #23252c;
-  --kind-bridge-fg: #e0a45e;
-  --kind-bridge-bg: #2c2620;
+  --edge-stroke: #423e50;
+  --edge-arrow: #756f8a;
+  --edge-label-fg: #9d97ae;
+  --edge-label-bg: #1c1b23;
+  --error: #e5a3ab;
+
+  --kind-system-fg: #a3ddce;
+  --kind-system-bg: #16302c;
+  --kind-container-fg: #a3c3e8;
+  --kind-container-bg: #16273a;
+  --kind-component-fg: #d6b0e0;
+  --kind-component-bg: #2c2436;
+  --kind-service-fg: #b3aef2;
+  --kind-service-bg: #262444;
+  --kind-server-fg: #e0b393;
+  --kind-server-bg: #2e2419;
+  --kind-database-fg: #9bd0af;
+  --kind-database-bg: #1f2f26;
+  --kind-class-fg: #ecd394;
+  --kind-class-bg: #2f2818;
+  --kind-external-fg: #a5a0b5;
+  --kind-external-bg: #24222c;
+  --kind-bridge-fg: #ecc094;
+  --kind-bridge-bg: #302719;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
 
   --font-ui: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -56,7 +66,73 @@ button {
 }
 
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.btn:hover {
+  background: var(--border);
+  border-color: var(--accent-dim);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.btn-primary:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  filter: brightness(1.15);
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+  border-radius: var(--radius-sm);
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.node-shape {
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.node-shape:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--shape-glow, var(--accent)) 45%, transparent);
+}
+
+.node-eye-btn {
+  transition: transform var(--transition), background var(--transition);
+}
+
+.node-eye-btn:hover {
+  transform: scale(1.08);
+  background: var(--surface-raised);
 }

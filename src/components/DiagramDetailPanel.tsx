@@ -20,9 +20,10 @@ export function DiagramDetailPanel({ node, notation, onClose }: DiagramDetailPan
   return (
     <div>
       <button
+        className="icon-btn"
         aria-label="Close details"
         onClick={onClose}
-        style={{ float: 'right', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14 }}
+        style={{ float: 'right', border: 'none', fontSize: 14, padding: 4 }}
       >
         ✕
       </button>

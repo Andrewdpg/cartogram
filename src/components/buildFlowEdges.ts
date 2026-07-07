@@ -40,10 +40,10 @@ export function buildFlowEdges(edges: DiagramEdgeData[], routing: RoutingResult)
       // as an undirected line.
       markerEnd: markerId
         ? `url(#${markerId})`
-        : { type: MarkerType.ArrowClosed, color: '#5c6273', width: 16, height: 16 },
-      style: { stroke: '#3a3e4b', strokeDasharray: dashed ? '4 3' : undefined },
-      labelStyle: { fill: '#9096a8', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
-      labelBgStyle: { fill: '#1b1d24' },
+        : { type: MarkerType.ArrowClosed, color: 'var(--edge-arrow)', width: 16, height: 16 },
+      style: { stroke: 'var(--edge-stroke)', strokeDasharray: dashed ? '4 3' : undefined },
+      labelStyle: { fill: 'var(--edge-label-fg)', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
+      labelBgStyle: { fill: 'var(--edge-label-bg)' },
     }
   })
 }

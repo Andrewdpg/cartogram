@@ -20,7 +20,7 @@ describe('buildFlowEdges', () => {
   it('gives a plain edge with no relationship a default arrow marker', () => {
     const edges: DiagramEdgeData[] = [{ from: 'a', to: 'b' }]
     const [flowEdge] = buildFlowEdges(edges, route(edges))
-    expect(flowEdge.markerEnd).toEqual({ type: MarkerType.ArrowClosed, color: '#5c6273', width: 16, height: 16 })
+    expect(flowEdge.markerEnd).toEqual({ type: MarkerType.ArrowClosed, color: 'var(--edge-arrow)', width: 16, height: 16 })
   })
 
   it('uses the composition marker id for a uml-structural composition edge', () => {
@@ -38,7 +38,7 @@ describe('buildFlowEdges', () => {
   it('falls back to the default arrow for association/dependency (no dedicated marker shape)', () => {
     const edges: DiagramEdgeData[] = [{ from: 'a', to: 'b', relationship: 'association' }]
     const [flowEdge] = buildFlowEdges(edges, route(edges))
-    expect(flowEdge.markerEnd).toEqual({ type: MarkerType.ArrowClosed, color: '#5c6273', width: 16, height: 16 })
+    expect(flowEdge.markerEnd).toEqual({ type: MarkerType.ArrowClosed, color: 'var(--edge-arrow)', width: 16, height: 16 })
   })
 
   it('renders a dashed stroke for an async uml-behavioral edge', () => {

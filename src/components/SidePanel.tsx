@@ -48,6 +48,7 @@ export function SidePanel({
   if (collapsed) {
     return (
       <button
+        className="icon-btn"
         aria-label="Show side panel"
         onClick={onToggleCollapsed}
         style={{
@@ -55,9 +56,8 @@ export function SidePanel({
           width: 28,
           border: 'none',
           borderLeft: '1px solid var(--border)',
+          borderRadius: 0,
           background: 'var(--surface)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
           fontSize: 14,
         }}
       >
@@ -80,14 +80,13 @@ export function SidePanel({
     >
       <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
         <button
+          className="icon-btn"
           aria-label="Hide side panel"
           onClick={onToggleCollapsed}
           style={{
             flexShrink: 0,
             border: 'none',
             background: 'transparent',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
             fontSize: 12,
             padding: '10px 8px',
           }}
@@ -107,7 +106,8 @@ export function SidePanel({
               cursor: 'pointer',
               fontSize: 12,
               textTransform: 'uppercase',
-              borderBottom: tab === t ? '2px solid var(--kind-service-fg, #8b93f8)' : '2px solid transparent',
+              transition: 'color var(--transition), border-color var(--transition)',
+              borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
             }}
           >
             {TAB_LABELS[t]}
@@ -126,20 +126,23 @@ export function SidePanel({
               style={{
                 flex: 1,
                 minHeight: 320,
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: 'var(--font-mono)',
                 fontSize: 12,
-                background: '#14151a',
+                background: 'var(--bg)',
                 color: 'var(--text)',
                 border: '1px solid var(--border)',
-                borderRadius: 4,
+                borderRadius: 'var(--radius-sm)',
                 padding: 8,
                 resize: 'vertical',
               }}
             />
-            {jsonError && <p style={{ color: '#e07a7a', fontSize: 12, margin: 0 }}>{jsonError}</p>}
+            {jsonError && <p style={{ color: 'var(--error)', fontSize: 12, margin: 0 }}>{jsonError}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleApply}>Apply</button>
+              <button className="btn btn-primary" onClick={handleApply}>
+                Apply
+              </button>
               <button
+                className="btn"
                 onClick={() => {
                   setJsonText(diagramJson)
                   setJsonError(null)

@@ -24,11 +24,13 @@ const baseBoxStyle = (kind: NodeKind): CSSProperties => ({
   fontFamily: 'var(--font-ui)',
   background: `var(--kind-${kind}-bg)`,
   border: `1px solid var(--kind-${kind}-fg)`,
+  boxShadow: '0 2px 8px -2px rgba(0, 0, 0, 0.4)',
+  ['--shape-glow' as string]: `var(--kind-${kind}-fg)`,
 })
 
 function SystemShape({ children }: ShapeProps) {
   return (
-    <div data-shape="system" style={{ ...baseBoxStyle('system'), borderRadius: 16 }}>
+    <div className="node-shape" data-shape="system" style={{ ...baseBoxStyle('system'), borderRadius: 16 }}>
       {children}
     </div>
   )
@@ -36,7 +38,7 @@ function SystemShape({ children }: ShapeProps) {
 
 function ContainerShape({ children }: ShapeProps) {
   return (
-    <div data-shape="container" style={{ ...baseBoxStyle('container'), borderRadius: 8, borderBottomWidth: 4 }}>
+    <div className="node-shape" data-shape="container" style={{ ...baseBoxStyle('container'), borderRadius: 8, borderBottomWidth: 4 }}>
       {children}
     </div>
   )
@@ -44,7 +46,7 @@ function ContainerShape({ children }: ShapeProps) {
 
 function ComponentShape({ children }: ShapeProps) {
   return (
-    <div data-shape="component" style={{ ...baseBoxStyle('component'), borderRadius: 4, paddingLeft: 20 }}>
+    <div className="node-shape" data-shape="component" style={{ ...baseBoxStyle('component'), borderRadius: 4, paddingLeft: 20 }}>
       <span
         style={{
           position: 'absolute',
@@ -74,7 +76,7 @@ function ComponentShape({ children }: ShapeProps) {
 
 function ServiceShape({ children }: ShapeProps) {
   return (
-    <div data-shape="service" style={{ ...baseBoxStyle('service'), borderRadius: 8, borderTopWidth: 4 }}>
+    <div className="node-shape" data-shape="service" style={{ ...baseBoxStyle('service'), borderRadius: 8, borderTopWidth: 4 }}>
       {children}
     </div>
   )
@@ -82,7 +84,7 @@ function ServiceShape({ children }: ShapeProps) {
 
 function ServerShape({ children }: ShapeProps) {
   return (
-    <div data-shape="server" style={{ ...baseBoxStyle('server'), borderRadius: 2, paddingLeft: 22 }}>
+    <div className="node-shape" data-shape="server" style={{ ...baseBoxStyle('server'), borderRadius: 2, paddingLeft: 22 }}>
       <div
         style={{
           position: 'absolute',
@@ -107,8 +109,16 @@ function ServerShape({ children }: ShapeProps) {
 function DatabaseShape({ children }: ShapeProps) {
   return (
     <div
+      className="node-shape"
       data-shape="database"
-      style={{ position: 'relative', minWidth: 160, maxWidth: NODE_MAX_WIDTH, color: 'var(--text)', fontFamily: 'var(--font-ui)' }}
+      style={{
+        position: 'relative',
+        minWidth: 160,
+        maxWidth: NODE_MAX_WIDTH,
+        color: 'var(--text)',
+        fontFamily: 'var(--font-ui)',
+        ['--shape-glow' as string]: 'var(--kind-database-fg)',
+      }}
     >
       <svg width="100%" height="16" style={{ position: 'absolute', top: -8, left: 0 }} viewBox="0 0 100 16" preserveAspectRatio="none">
         <ellipse cx="50" cy="8" rx="49" ry="7" fill="var(--kind-database-bg)" stroke="var(--kind-database-fg)" />
@@ -135,7 +145,7 @@ function DatabaseShape({ children }: ShapeProps) {
 
 function ClassShape({ node, children }: ShapeProps) {
   return (
-    <div data-shape="class" style={{ ...baseBoxStyle('class'), borderRadius: 2, padding: 0 }}>
+    <div className="node-shape" data-shape="class" style={{ ...baseBoxStyle('class'), borderRadius: 2, padding: 0 }}>
       <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--kind-class-fg)' }}>{children}</div>
       {node.attributes && node.attributes.length > 0 && (
         <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--kind-class-fg)', fontSize: 11 }}>
@@ -157,7 +167,7 @@ function ClassShape({ node, children }: ShapeProps) {
 
 function ExternalShape({ children }: ShapeProps) {
   return (
-    <div data-shape="external" style={{ ...baseBoxStyle('external'), borderRadius: 16, borderStyle: 'dashed' }}>
+    <div className="node-shape" data-shape="external" style={{ ...baseBoxStyle('external'), borderRadius: 16, borderStyle: 'dashed' }}>
       {children}
     </div>
   )
@@ -165,7 +175,7 @@ function ExternalShape({ children }: ShapeProps) {
 
 function BridgeShape({ children }: ShapeProps) {
   return (
-    <div data-shape="bridge" style={{ ...baseBoxStyle('bridge'), borderRadius: 4, paddingLeft: 20, paddingRight: 20 }}>
+    <div className="node-shape" data-shape="bridge" style={{ ...baseBoxStyle('bridge'), borderRadius: 4, paddingLeft: 20, paddingRight: 20 }}>
       <span
         style={{
           position: 'absolute',

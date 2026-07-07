@@ -42,6 +42,7 @@ export function DiagramNode({ data }: DiagramNodeProps) {
       ))}
       {data.onOpenDetail && (
         <button
+          className="node-eye-btn"
           aria-label={`View details for ${data.label}`}
           onClick={(e) => {
             e.stopPropagation()
@@ -58,7 +59,7 @@ export function DiagramNode({ data }: DiagramNodeProps) {
             justifyContent: 'center',
             borderRadius: '50%',
             border: '1px solid var(--border)',
-            background: 'var(--surface, #1b1d24)',
+            background: 'var(--surface)',
             color: 'var(--text)',
             cursor: 'pointer',
             fontSize: 11,
