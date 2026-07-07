@@ -8,12 +8,15 @@ export function Breadcrumb({ labels, onNavigate }: BreadcrumbProps) {
     <nav
       aria-label="breadcrumb"
       style={{
-        display: 'flex',
+        display: 'inline-flex',
+        alignSelf: 'flex-start',
         alignItems: 'center',
         gap: 4,
-        padding: '10px 16px',
+        padding: '8px 14px',
         background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-float)',
         fontSize: 13,
       }}
     >

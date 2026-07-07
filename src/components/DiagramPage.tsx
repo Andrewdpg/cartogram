@@ -71,6 +71,11 @@ export function DiagramPage() {
     navigate(`/${[...segments, nodeId].join('/')}`)
   }
 
+  function handleNodeDetailRequest(nodeId: string) {
+    setSelectedNodeId(nodeId)
+    setPanelCollapsed(false)
+  }
+
   function handleBreadcrumbNavigate(index: number) {
     setSelectedNodeId(null)
     navigate(`/${segments.slice(0, index).join('/')}`)
@@ -93,15 +98,25 @@ export function DiagramPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100dvh',
+        padding: 12,
+        gap: 12,
+        background: 'var(--bg)',
+        boxSizing: 'border-box',
+      }}
+    >
       <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, display: 'flex', gap: 12, minHeight: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <DiagramCanvas
             nodes={positionedNodes}
             edges={current.edges}
             onNodeClick={handleNodeClick}
-            onNodeDetailRequest={setSelectedNodeId}
+            onNodeDetailRequest={handleNodeDetailRequest}
           />
         </div>
         <SidePanel

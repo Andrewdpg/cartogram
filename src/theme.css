@@ -37,7 +37,10 @@
 
   --radius-sm: 6px;
   --radius-md: 10px;
+  --radius-lg: 16px;
   --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-float: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
 
   --font-ui: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
