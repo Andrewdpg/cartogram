@@ -14,6 +14,7 @@ import { DiagramNode } from './DiagramNode'
 import { UmlMarkerDefs } from './umlMarkers'
 import { buildFlowEdges } from './buildFlowEdges'
 import { computeEdgeRouting } from '../lib/edgeGeometry'
+import { estimateNodeSize } from '../lib/autoLayout'
 import type { PositionedNode } from '../lib/autoLayout'
 import type { DiagramEdgeData } from '../lib/types'
 
@@ -43,7 +44,11 @@ export function DiagramCanvas({ nodes, edges, onNodeClick, onNodeDetailRequest }
   // edges sharing a (node, side) across distinct points, instead of every
   // edge fighting for the same fixed left/right anchor. See edgeGeometry.ts.
   const routing = useMemo(
-    () => computeEdgeRouting(nodes, edges.map((e) => ({ id: `${e.from}->${e.to}`, from: e.from, to: e.to }))),
+    () =>
+      computeEdgeRouting(
+        nodes.map((n) => ({ id: n.id, x: n.x, y: n.y, ...estimateNodeSize(n) })),
+        edges.map((e) => ({ id: `${e.from}->${e.to}`, from: e.from, to: e.to }))
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [diagramKey]
   )

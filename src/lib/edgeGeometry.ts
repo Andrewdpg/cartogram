@@ -22,6 +22,8 @@ interface NodePosition {
   id: string
   x: number
   y: number
+  width: number
+  height: number
 }
 
 interface EdgeRef {
@@ -30,19 +32,22 @@ interface EdgeRef {
   to: string
 }
 
-// ponytail: this tool only ever lays out left-to-right (rankdir: 'LR' in
-// autoLayout.ts). A forward edge (target at or right of source) uses the
-// natural right→left flow every other edge on that rank uses. A back edge
-// (a cyclic "calls back" relationship — common when two services call each
-// other) is routed bottom→top instead of fighting for the same left/right
-// anchor point the forward edges already occupy on that node — that's what
-// actually separates a bidirectional pair visually instead of bunching every
-// line through one spot per side.
-function pickSides(fromX: number, toX: number): { sourceSide: Side; targetSide: Side } {
-  if (toX >= fromX) {
-    return { sourceSide: 'right', targetSide: 'left' }
+// ponytail: purely geometric — picks whichever side of a node's rectangle is
+// closest to the direction of the other node's center, the same way a
+// "floating edge" would, using the node's own half-width/half-height to
+// account for non-square boxes. Deliberately NOT direction-aware (forward
+// vs. cyclic/back edges used to force bottom/top instead of left/right) —
+// that semantic split caused edges to take a longer, tangled path instead of
+// the geometrically direct one. Multiple edges landing on the same side of
+// the same node are still spread apart (see registerHandle below), so this
+// alone doesn't reintroduce the original stacking problem.
+function pickSide(dx: number, dy: number, halfWidth: number, halfHeight: number): Side {
+  const scaledDx = halfWidth > 0 ? dx / halfWidth : dx
+  const scaledDy = halfHeight > 0 ? dy / halfHeight : dy
+  if (Math.abs(scaledDx) >= Math.abs(scaledDy)) {
+    return scaledDx >= 0 ? 'right' : 'left'
   }
-  return { sourceSide: 'bottom', targetSide: 'top' }
+  return scaledDy >= 0 ? 'bottom' : 'top'
 }
 
 interface SideGroup {
@@ -81,7 +86,8 @@ export function computeEdgeRouting(nodes: NodePosition[], edges: EdgeRef[]): Rou
     const to = positionById.get(edge.to)
     if (!from || !to) continue // dangling reference — validateDiagramShape already guards this elsewhere
 
-    const { sourceSide, targetSide } = pickSides(from.x, to.x)
+    const sourceSide = pickSide(to.x - from.x, to.y - from.y, from.width / 2, from.height / 2)
+    const targetSide = pickSide(from.x - to.x, from.y - to.y, to.width / 2, to.height / 2)
     const sourceHandle = registerHandle(edge.from, sourceSide, 'source')
     const targetHandle = registerHandle(edge.to, targetSide, 'target')
     edgeRouting.push({ edgeId: edge.id, sourceHandle, targetHandle })

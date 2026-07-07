@@ -5,8 +5,8 @@ import { computeEdgeRouting } from '../lib/edgeGeometry'
 import type { DiagramEdgeData } from '../lib/types'
 
 const nodes = [
-  { id: 'a', x: 0, y: 0 },
-  { id: 'b', x: 200, y: 0 },
+  { id: 'a', x: 0, y: 0, width: 180, height: 60 },
+  { id: 'b', x: 200, y: 0, width: 180, height: 60 },
 ]
 
 function route(edges: DiagramEdgeData[]) {
