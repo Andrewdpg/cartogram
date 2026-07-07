@@ -9,13 +9,23 @@ export interface SidePanelProps {
   onCloseNode: () => void
   diagramJson: string
   onApplyJson: (raw: string) => string | null
+  collapsed: boolean
+  onToggleCollapsed: () => void
 }
 
 type Tab = 'details' | 'json' | 'legend'
 
 const TAB_LABELS: Record<Tab, string> = { details: 'Details', json: 'Edit JSON', legend: 'Legend' }
 
-export function SidePanel({ node, notation, onCloseNode, diagramJson, onApplyJson }: SidePanelProps) {
+export function SidePanel({
+  node,
+  notation,
+  onCloseNode,
+  diagramJson,
+  onApplyJson,
+  collapsed,
+  onToggleCollapsed,
+}: SidePanelProps) {
   const [tab, setTab] = useState<Tab>('legend')
   const [jsonText, setJsonText] = useState(diagramJson)
   const [jsonError, setJsonError] = useState<string | null>(null)
@@ -35,6 +45,27 @@ export function SidePanel({ node, notation, onCloseNode, diagramJson, onApplyJso
     setJsonError(onApplyJson(jsonText))
   }
 
+  if (collapsed) {
+    return (
+      <button
+        aria-label="Show side panel"
+        onClick={onToggleCollapsed}
+        style={{
+          flexShrink: 0,
+          width: 28,
+          border: 'none',
+          borderLeft: '1px solid var(--border)',
+          background: 'var(--surface)',
+          color: 'var(--text-muted)',
+          cursor: 'pointer',
+          fontSize: 14,
+        }}
+      >
+        ◀
+      </button>
+    )
+  }
+
   return (
     <aside
       style={{
@@ -47,7 +78,22 @@ export function SidePanel({ node, notation, onCloseNode, diagramJson, onApplyJso
         flexDirection: 'column',
       }}
     >
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+        <button
+          aria-label="Hide side panel"
+          onClick={onToggleCollapsed}
+          style={{
+            flexShrink: 0,
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: 12,
+            padding: '10px 8px',
+          }}
+        >
+          ▶
+        </button>
         {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
           <button
             key={t}

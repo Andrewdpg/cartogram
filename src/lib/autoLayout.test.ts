@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { layoutDiagram } from './autoLayout'
+import { layoutDiagram, estimateNodeSize, NODE_MAX_WIDTH } from './autoLayout'
 import type { DiagramNodeData, DiagramEdgeData } from './types'
 
 describe('layoutDiagram', () => {
@@ -35,5 +35,28 @@ describe('layoutDiagram', () => {
     const [a] = layoutDiagram(nodes, [])
     expect(a.x).toBe(999)
     expect(a.y).toBe(111)
+  })
+})
+
+describe('estimateNodeSize', () => {
+  it('never estimates a width beyond NODE_MAX_WIDTH, even for a long label', () => {
+    const node: DiagramNodeData = {
+      id: 'a',
+      label: 'A Very Long Label That Would Otherwise Blow Up The Box Width',
+      kind: 'service',
+    }
+    expect(estimateNodeSize(node).width).toBeLessThanOrEqual(NODE_MAX_WIDTH)
+  })
+
+  it('grows the height estimate for a long responsibility (multi-line wrap), not a flat constant', () => {
+    const short: DiagramNodeData = { id: 'a', label: 'A', kind: 'service', responsibility: 'Short.' }
+    const long: DiagramNodeData = {
+      id: 'a',
+      label: 'A',
+      kind: 'service',
+      responsibility:
+        'This is a much longer responsibility sentence that will need to wrap across several lines once the box width is capped, unlike a short one.',
+    }
+    expect(estimateNodeSize(long).height).toBeGreaterThan(estimateNodeSize(short).height)
   })
 })

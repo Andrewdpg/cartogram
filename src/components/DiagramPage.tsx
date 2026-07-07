@@ -20,6 +20,7 @@ export function DiagramPage() {
     [params['*']]
   )
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [panelCollapsed, setPanelCollapsed] = useState(false)
   // ponytail: session-only edits from the JSON tab, keyed by diagram id —
   // lost on refresh, never written back to diagrams/*.json.
   const [overrides, setOverrides] = useState<Map<string, Diagram>>(new Map())
@@ -109,6 +110,8 @@ export function DiagramPage() {
           onCloseNode={() => setSelectedNodeId(null)}
           diagramJson={JSON.stringify(current, null, 2)}
           onApplyJson={handleApplyJson}
+          collapsed={panelCollapsed}
+          onToggleCollapsed={() => setPanelCollapsed((c) => !c)}
         />
       </div>
     </div>

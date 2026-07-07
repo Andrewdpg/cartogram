@@ -1,17 +1,25 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { DiagramNodeData, NodeKind } from '../lib/types'
+import { NODE_MAX_WIDTH } from '../lib/autoLayout'
 
 export interface ShapeProps {
   node: DiagramNodeData
   children: ReactNode
 }
 
+// ponytail: minWidth AND maxWidth are both required here — without maxWidth,
+// a long `responsibility` string stretches the box instead of wrapping
+// (flex-column containers size to fit unwrapped content by default). This
+// must stay equal to autoLayout.ts's NODE_MAX_WIDTH, or dagre's reserved
+// spacing no longer matches the real rendered box and nodes overlap again.
 const baseBoxStyle = (kind: NodeKind): CSSProperties => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
   padding: '10px 14px',
   minWidth: 160,
+  maxWidth: NODE_MAX_WIDTH,
+  overflowWrap: 'break-word',
   color: 'var(--text)',
   fontFamily: 'var(--font-ui)',
   background: `var(--kind-${kind}-bg)`,
@@ -98,7 +106,10 @@ function ServerShape({ children }: ShapeProps) {
 
 function DatabaseShape({ children }: ShapeProps) {
   return (
-    <div data-shape="database" style={{ position: 'relative', minWidth: 160, color: 'var(--text)', fontFamily: 'var(--font-ui)' }}>
+    <div
+      data-shape="database"
+      style={{ position: 'relative', minWidth: 160, maxWidth: NODE_MAX_WIDTH, color: 'var(--text)', fontFamily: 'var(--font-ui)' }}
+    >
       <svg width="100%" height="16" style={{ position: 'absolute', top: -8, left: 0 }} viewBox="0 0 100 16" preserveAspectRatio="none">
         <ellipse cx="50" cy="8" rx="49" ry="7" fill="var(--kind-database-bg)" stroke="var(--kind-database-fg)" />
       </svg>
@@ -106,6 +117,7 @@ function DatabaseShape({ children }: ShapeProps) {
         style={{
           display: 'flex',
           flexDirection: 'column',
+          overflowWrap: 'break-word',
           background: 'var(--kind-database-bg)',
           borderLeft: '1px solid var(--kind-database-fg)',
           borderRight: '1px solid var(--kind-database-fg)',
