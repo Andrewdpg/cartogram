@@ -26,7 +26,7 @@ export function LoginPage() {
           <p>Check your email for a magic link to sign in.</p>
         ) : (
           <>
-            <p className="hint">Trazá el territorio de tu sistema</p>
+            <p className="hint">Trace your system's territory</p>
             <form onSubmit={handleSubmit}>
               <div className="field">
                 <label htmlFor="email">Email</label>

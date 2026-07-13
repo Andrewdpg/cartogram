@@ -38,7 +38,7 @@ export function ProjectDashboard() {
       <div className="dashboard-body">
         <h1>Your projects</h1>
         <p className="dashboard-hint">
-          {projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'}
+          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </p>
         {error && (
           <p role="alert" className="alert">
