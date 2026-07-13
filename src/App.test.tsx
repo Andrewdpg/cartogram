@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { App } from './App'
 import type { Diagram } from './lib/types'
 
@@ -55,16 +56,14 @@ describe('App', () => {
     expect(await screen.findByText('Your projects')).toBeInTheDocument()
   })
 
-  it('routes /projects/:projectId/share to ShareProjectPanel, not DiagramPage as a splat segment', async () => {
-    // Regression guard: /projects/:projectId/* (DiagramPage's catch-all)
-    // and /projects/:projectId/share are declared as siblings in the same
-    // <Routes> tree. React Router v6 is documented to rank the static
-    // "share" segment above the splat, but that ranking has had
-    // inconsistent edge cases reported upstream — assert the actual
-    // rendered component instead of trusting the ranking rules alone.
-    window.history.pushState({}, '', '/projects/test-project-id/share')
+  it('opens the Share tab in the side panel instead of navigating to a separate screen', async () => {
+    // Sharing used to be its own route (/projects/:projectId/share); it's
+    // now a tab in the same SidePanel used for node details/JSON/legend,
+    // so there's no page navigation and no way to get "stuck" off-canvas.
+    window.history.pushState({}, '', '/projects/test-project-id/')
     render(<App />)
-    expect(await screen.findByText('Collaborators')).toBeInTheDocument()
-    expect(screen.queryByText('Diagram not found')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Home')).toBeInTheDocument())
+    await userEvent.click(screen.getByLabelText('Open share panel'))
+    expect(await screen.findByLabelText('Collaborator email')).toBeInTheDocument()
   })
 })

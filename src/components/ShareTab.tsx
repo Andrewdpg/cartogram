@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
 import { listCollaborators, inviteCollaborator, type Collaborator } from '../lib/collaboratorRepo'
 
-export function ShareProjectPanel({ projectId: projectIdProp }: { projectId?: string }) {
-  const params = useParams<{ projectId: string }>()
-  const projectId = projectIdProp ?? params.projectId!
+export function ShareTab({ projectId }: { projectId: string }) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -30,19 +27,31 @@ export function ShareProjectPanel({ projectId: projectIdProp }: { projectId?: st
 
   return (
     <div>
-      <h2>Collaborators</h2>
-      {error && <p role="alert">{error}</p>}
-      <ul>
+      <ul className="collab-list">
         {collaborators.map((c) => (
-          <li key={c.userId}>
-            <span>{c.email}</span> — <span>{c.role}</span>
+          <li key={c.userId} className="collab-item">
+            <span>{c.email}</span>
+            <span className="role-badge">{c.role}</span>
           </li>
         ))}
       </ul>
-      <label htmlFor="collab-email">Collaborator email</label>
-      <input id="collab-email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <button onClick={() => handleInvite('viewer')}>Invite as viewer</button>
-      <button onClick={() => handleInvite('editor')}>Invite as editor</button>
+      <div className="field">
+        <label htmlFor="collab-email">Collaborator email</label>
+        <input id="collab-email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      {error && (
+        <p role="alert" className="alert">
+          {error}
+        </p>
+      )}
+      <div className="collab-invite-actions">
+        <button className="btn btn-primary" onClick={() => handleInvite('viewer')}>
+          Invite as viewer
+        </button>
+        <button className="btn" onClick={() => handleInvite('editor')}>
+          Invite as editor
+        </button>
+      </div>
     </div>
   )
 }

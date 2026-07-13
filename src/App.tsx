@@ -5,7 +5,6 @@ import { AppShell } from './components/AppShell'
 import { DiagramPage } from './components/DiagramPage'
 import { ProjectDashboard } from './components/ProjectDashboard'
 import { McpIntegrationSettings } from './components/McpIntegrationSettings'
-import { ShareProjectPanel } from './components/ShareProjectPanel'
 import { McpAuthorize } from './components/McpAuthorize'
 
 export function App() {
@@ -22,7 +21,6 @@ export function App() {
           }
         >
           <Route path="/projects" element={<ProjectDashboard />} />
-          <Route path="/projects/:projectId/share" element={<ShareProjectPanel />} />
           <Route path="/projects/:projectId/*" element={<DiagramPage />} />
           <Route path="/settings/integrations" element={<McpIntegrationSettings />} />
         </Route>

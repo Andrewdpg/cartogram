@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { ShareProjectPanel } from './ShareProjectPanel'
+import { ShareTab } from './ShareTab'
 
 vi.mock('../lib/collaboratorRepo', () => ({
   listCollaborators: vi.fn(),
@@ -9,12 +9,12 @@ vi.mock('../lib/collaboratorRepo', () => ({
 
 import { listCollaborators, inviteCollaborator } from '../lib/collaboratorRepo'
 
-describe('ShareProjectPanel', () => {
+describe('ShareTab', () => {
   it('lists current collaborators', async () => {
     vi.mocked(listCollaborators).mockResolvedValue([
       { userId: 'u1', email: 'friend@example.com', role: 'viewer' },
     ])
-    render(<ShareProjectPanel projectId="proj-1" />)
+    render(<ShareTab projectId="proj-1" />)
     expect(await screen.findByText('friend@example.com')).toBeInTheDocument()
     expect(screen.getByText('viewer')).toBeInTheDocument()
   })
@@ -22,7 +22,7 @@ describe('ShareProjectPanel', () => {
   it('invites a new collaborator', async () => {
     vi.mocked(listCollaborators).mockResolvedValue([])
     vi.mocked(inviteCollaborator).mockResolvedValue(undefined)
-    render(<ShareProjectPanel projectId="proj-1" />)
+    render(<ShareTab projectId="proj-1" />)
     await waitFor(() => expect(listCollaborators).toHaveBeenCalled())
 
     fireEvent.change(screen.getByLabelText('Collaborator email'), {
@@ -35,15 +35,10 @@ describe('ShareProjectPanel', () => {
     )
   })
 
-  it('shows an error message instead of silently failing when the invite rpc rejects', async () => {
-    // Regression guard: this component previously had no .catch on either
-    // the initial listCollaborators load or the invite handler — a
-    // rejection (e.g. inviting an email with no matching user, which
-    // invite_collaborator_by_email explicitly rejects) surfaced as an
-    // unhandled promise rejection with zero user-visible feedback.
+  it('shows a visible error instead of silently failing when the invite rpc rejects', async () => {
     vi.mocked(listCollaborators).mockResolvedValue([])
     vi.mocked(inviteCollaborator).mockRejectedValue(new Error('No user with that email'))
-    render(<ShareProjectPanel projectId="proj-1" />)
+    render(<ShareTab projectId="proj-1" />)
     await waitFor(() => expect(listCollaborators).toHaveBeenCalled())
 
     fireEvent.change(screen.getByLabelText('Collaborator email'), {
@@ -51,6 +46,8 @@ describe('ShareProjectPanel', () => {
     })
     fireEvent.click(screen.getByText('Invite as viewer'))
 
-    expect(await screen.findByText('No user with that email')).toBeInTheDocument()
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('No user with that email')
+    expect(alert.className).toContain('alert')
   })
 })

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getDiagram, updateDiagram, listDiagrams } from '../lib/diagramRepo'
 import { resolveDiagramPath } from '../lib/resolveDiagramPath'
 import { validateDiagramShape } from '../lib/validateDiagram'
@@ -8,7 +8,7 @@ import type { Diagram } from '../lib/types'
 import { layoutDiagram } from '../lib/autoLayout'
 import { DiagramCanvas } from './DiagramCanvas'
 import { Breadcrumb } from './Breadcrumb'
-import { SidePanel } from './SidePanel'
+import { SidePanel, type Tab } from './SidePanel'
 
 type LoadedDiagram = { diagram: Diagram; version: number }
 type Resolution =
@@ -34,6 +34,7 @@ export function DiagramPage() {
   )
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
+  const [activeTab, setActiveTab] = useState<Tab>('legend')
   const [resolution, setResolution] = useState<Resolution>({ status: 'loading' })
   const [conflictMessage, setConflictMessage] = useState<string | null>(null)
   const [availableDiagrams, setAvailableDiagrams] = useState<{ slug: string; title: string }[]>([])
@@ -141,6 +142,12 @@ export function DiagramPage() {
   function handleNodeDetailRequest(nodeId: string) {
     setSelectedNodeId(nodeId)
     setPanelCollapsed(false)
+    setActiveTab('details')
+  }
+
+  function handleShareClick() {
+    setPanelCollapsed(false)
+    setActiveTab('share')
   }
 
   function handleBreadcrumbNavigate(index: number) {
@@ -213,9 +220,9 @@ export function DiagramPage() {
         <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {diagramPicker}
-          <Link to={`/projects/${projectId}/share`} style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          <button className="btn" aria-label="Open share panel" onClick={handleShareClick}>
             Share
-          </Link>
+          </button>
         </div>
       </div>
       <div style={{ flex: 1, display: 'flex', gap: 12, minHeight: 0 }}>
@@ -235,6 +242,9 @@ export function DiagramPage() {
           onApplyJson={handleApplyJson}
           collapsed={panelCollapsed}
           onToggleCollapsed={() => setPanelCollapsed((c) => !c)}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          projectId={projectId!}
         />
       </div>
     </div>
