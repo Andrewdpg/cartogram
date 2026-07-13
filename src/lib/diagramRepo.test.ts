@@ -93,10 +93,53 @@ describe('listProjects / createProject', () => {
     expect(result).toEqual([{ id: 'p1', name: 'Proj 1' }])
   })
 
-  it('creates a project', async () => {
+  it('creates a project and seeds an empty deployment diagram so it is immediately openable', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
-    mockFrom.mockReturnValue(chainable({ data: { id: 'p2', name: 'New Proj' }, error: null }))
+    const insertCalls: unknown[] = []
+    mockFrom.mockImplementation((table: string) => {
+      const chain: any = {
+        select: () => chain,
+        eq: () => chain,
+        single: () => Promise.resolve({ data: { id: 'p2', name: 'New Proj' }, error: null }),
+        insert: (payload: unknown) => {
+          insertCalls.push({ table, payload })
+          return table === 'diagrams' ? Promise.resolve({ error: null }) : chain
+        },
+      }
+      return chain
+    })
     const result = await createProject('New Proj')
     expect(result).toEqual({ id: 'p2', name: 'New Proj' })
+    expect(insertCalls).toEqual([
+      { table: 'projects', payload: { name: 'New Proj', owner_id: 'user-1' } },
+      {
+        table: 'diagrams',
+        payload: {
+          project_id: 'p2',
+          slug: 'deployment',
+          title: 'Deployment',
+          notation: 'c4',
+          content: { nodes: [], edges: [] },
+        },
+      },
+    ])
+  })
+
+  it('rolls back the created project if seeding the deployment diagram fails', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+    const deleteEq = vi.fn().mockResolvedValue({ error: null })
+    mockFrom.mockImplementation((table: string) => {
+      const chain: any = {
+        select: () => chain,
+        eq: () => chain,
+        single: () => Promise.resolve({ data: { id: 'p2', name: 'New Proj' }, error: null }),
+        insert: () => (table === 'diagrams' ? Promise.resolve({ error: { message: 'diagram insert failed' } }) : chain),
+        delete: () => ({ eq: deleteEq }),
+      }
+      return chain
+    })
+
+    await expect(createProject('New Proj')).rejects.toThrow('diagram insert failed')
+    expect(deleteEq).toHaveBeenCalledWith('id', 'p2')
   })
 })

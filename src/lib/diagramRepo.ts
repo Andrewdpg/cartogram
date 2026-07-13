@@ -25,6 +25,20 @@ export async function createProject(name: string): Promise<{ id: string; name: s
     .select('id, name')
     .single()
   if (error) throw error
+
+  // resolveDiagramPath always resolves a project's root as its 'deployment'
+  // slug — without seeding one, a freshly created project has nowhere to
+  // land and DiagramPage shows "not found" the instant it's opened. No
+  // multi-table transaction over PostgREST, so if this insert fails, roll
+  // back the just-created project rather than leaving an orphan with no
+  // root diagram stuck in the dashboard.
+  try {
+    await createDiagram(data.id, 'deployment', 'Deployment', 'c4', { nodes: [], edges: [] })
+  } catch (err) {
+    await supabase.from('projects').delete().eq('id', data.id)
+    throw err
+  }
+
   return data
 }
 
