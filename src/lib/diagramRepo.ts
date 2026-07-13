@@ -9,8 +9,12 @@ export async function listProjects(): Promise<{ id: string; name: string }[]> {
 }
 
 export async function createProject(name: string): Promise<{ id: string; name: string }> {
-  // ponytail: owner_id is set by a DB default (auth.uid()) via RLS, not here —
-  // the brief's test mocks `from` only, no `auth.getUser`.
+  // NOTE: owner_id is required NOT NULL by the projects table and its RLS
+  // insert policy checks owner_id = auth.uid() — but the brief's test only
+  // mocks `from`, not `auth.getUser`, so this omits owner_id to match the
+  // brief's test contract. This will fail against the real schema. Flagged
+  // in the task report; needs a decision (client passes owner_id + test
+  // gets an auth mock, or a trigger sets owner_id server-side).
   const { data, error } = await supabase
     .from('projects')
     .insert({ name })
