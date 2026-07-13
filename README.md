@@ -9,6 +9,7 @@ rectangle with a title.
 ## Usage
 
     npm install
+    supabase start  # Start the backend (see "Backend (Supabase)" section)
     npm run dev
 
 Click any node that looks clickable (it has a `childDiagram`) to drill down
@@ -23,10 +24,32 @@ The side panel has three tabs:
 - **Legend** — every node shape and edge style rendered live, so it can't
   drift from what's actually on screen.
 
+## Backend (Supabase)
+
+Diagrams are stored in Supabase (Postgres), not local files. To run the
+backend locally:
+
+    supabase start
+
+This starts a local Postgres + Auth stack via Docker and prints an API URL,
+anon key, and service_role key. Apply schema changes with:
+
+    supabase db reset
+
+Run the RLS/access-control test suite with:
+
+    supabase test db
+
+Schema and policies live under `supabase/migrations/`; access-control tests
+live under `supabase/tests/database/`.
+
 ## Authoring diagrams
 
-Every diagram is one JSON file under `diagrams/`. See `diagrams/deployment.json`
-for a working example. A diagram has:
+Diagrams are stored in Supabase, not local files — create and edit them from
+the web app, or via the MCP server. `diagrams/*.json` in this repo are
+reference examples of the JSON shape only (used by `scripts/validate-diagrams.ts`
+as a schema-validation fixture) — editing them has no effect on the running
+app. A diagram has:
 
 - `notation` (optional, defaults to `"c4"`): `"c4"` for a high-level
   system/container/component view, `"uml-structural"` for a class-diagram-style

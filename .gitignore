@@ -31,3 +31,7 @@ yarn-error.log*
 
 # SDD scratch workspace (already self-ignoring, belt and suspenders)
 .superpowers/
+
+# Supabase local development
+supabase/.branches
+supabase/.temp

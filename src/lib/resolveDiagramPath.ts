@@ -1,25 +1,32 @@
 import type { Diagram } from './types'
 import { DiagramNotFoundError } from './types'
 
-export interface ResolvedDiagramPath {
-  chain: Diagram[]
+export interface LoadedDiagram {
+  diagram: Diagram
+  version: number
 }
 
-export function resolveDiagramPath(
+export interface ResolvedDiagramPath {
+  chain: LoadedDiagram[]
+}
+
+export async function resolveDiagramPath(
+  projectId: string,
   segments: string[],
-  loadFn: (id: string) => Diagram
-): ResolvedDiagramPath {
-  const root = loadFn('deployment')
-  const chain: Diagram[] = [root]
-  let current = root
+  loadFn: (projectId: string, slug: string) => Promise<LoadedDiagram>
+): Promise<ResolvedDiagramPath> {
+  const root = await loadFn(projectId, 'deployment')
+  const chain: LoadedDiagram[] = [root]
+  let current = root.diagram
 
   for (const nodeId of segments) {
     const node = current.nodes.find((n) => n.id === nodeId)
     if (!node || !node.childDiagram) {
       throw new DiagramNotFoundError(nodeId)
     }
-    current = loadFn(node.childDiagram)
-    chain.push(current)
+    const loaded = await loadFn(projectId, node.childDiagram)
+    chain.push(loaded)
+    current = loaded.diagram
   }
 
   return { chain }

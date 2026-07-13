@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { loadDiagram } from '../lib/loadDiagram'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getDiagram, updateDiagram } from '../lib/diagramRepo'
 import { resolveDiagramPath } from '../lib/resolveDiagramPath'
 import { validateDiagramShape } from '../lib/validateDiagram'
 import { DiagramNotFoundError } from '../lib/types'
@@ -10,9 +10,14 @@ import { DiagramCanvas } from './DiagramCanvas'
 import { Breadcrumb } from './Breadcrumb'
 import { SidePanel } from './SidePanel'
 
-type Resolution = { chain: Diagram[] } | { notFoundId: string }
+type LoadedDiagram = { diagram: Diagram; version: number }
+type Resolution =
+  | { status: 'loading' }
+  | { status: 'error'; notFoundId: string }
+  | { status: 'ready'; chain: LoadedDiagram[] }
 
 export function DiagramPage() {
+  const { projectId } = useParams<{ projectId: string }>()
   const params = useParams()
   const navigate = useNavigate()
   const segments = useMemo(
@@ -21,22 +26,26 @@ export function DiagramPage() {
   )
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
-  // ponytail: session-only edits from the JSON tab, keyed by diagram id —
-  // lost on refresh, never written back to diagrams/*.json.
-  const [overrides, setOverrides] = useState<Map<string, Diagram>>(new Map())
+  const [resolution, setResolution] = useState<Resolution>({ status: 'loading' })
+  const [conflictMessage, setConflictMessage] = useState<string | null>(null)
 
-  const resolution: Resolution = useMemo(() => {
-    try {
-      return resolveDiagramPath(segments, loadDiagram)
-    } catch (err) {
-      if (err instanceof DiagramNotFoundError) {
-        return { notFoundId: err.diagramId }
-      }
-      throw err
-    }
-  }, [segments])
+  useEffect(() => {
+    if (!projectId) return
+    setResolution({ status: 'loading' })
+    resolveDiagramPath(projectId, segments, getDiagram)
+      .then((r) => setResolution({ status: 'ready', chain: r.chain }))
+      .catch((err) => {
+        if (err instanceof DiagramNotFoundError) {
+          setResolution({ status: 'error', notFoundId: err.diagramId })
+        } else {
+          throw err
+        }
+      })
+  }, [projectId, segments])
 
-  if ('notFoundId' in resolution) {
+  if (resolution.status === 'loading') return null
+
+  if (resolution.status === 'error') {
     return (
       <div
         style={{
@@ -59,16 +68,16 @@ export function DiagramPage() {
     )
   }
 
-  const originalCurrent = resolution.chain[resolution.chain.length - 1]
-  const current = overrides.get(originalCurrent.id) ?? originalCurrent
+  const { chain } = resolution
+  const { diagram: current, version: currentVersion } = chain[chain.length - 1]
   const positionedNodes = layoutDiagram(current.nodes, current.edges)
-  const labels = ['Home', ...resolution.chain.slice(1).map((d) => d.title)]
+  const labels = ['Home', ...chain.slice(1).map((d) => d.diagram.title)]
   const selectedNode = current.nodes.find((n) => n.id === selectedNodeId) ?? null
 
   function handleNodeClick(nodeId: string) {
     const node = current.nodes.find((n) => n.id === nodeId)
     if (!node?.childDiagram) return
-    navigate(`/${[...segments, nodeId].join('/')}`)
+    navigate(`/projects/${projectId}/${[...segments, nodeId].join('/')}`)
   }
 
   function handleNodeDetailRequest(nodeId: string) {
@@ -78,23 +87,50 @@ export function DiagramPage() {
 
   function handleBreadcrumbNavigate(index: number) {
     setSelectedNodeId(null)
-    navigate(`/${segments.slice(0, index).join('/')}`)
+    navigate(`/projects/${projectId}/${segments.slice(0, index).join('/')}`)
   }
 
-  function handleApplyJson(raw: string): string | null {
+  async function handleApplyJson(raw: string): Promise<string | null> {
     let parsed: unknown
     try {
       parsed = JSON.parse(raw)
     } catch (err) {
       return `Invalid JSON: ${(err as Error).message}`
     }
+    let diagram: Diagram
     try {
-      const diagram = validateDiagramShape(parsed, originalCurrent.id)
-      setOverrides((prev) => new Map(prev).set(originalCurrent.id, diagram))
-      return null
+      diagram = validateDiagramShape(parsed, current.id)
     } catch (err) {
       return (err as Error).message
     }
+
+    const currentSlug = segments.length === 0 ? 'deployment' : current.id
+    let result: Awaited<ReturnType<typeof updateDiagram>>
+    try {
+      result = await updateDiagram(
+        projectId!,
+        currentSlug,
+        { nodes: diagram.nodes, edges: diagram.edges },
+        currentVersion
+      )
+    } catch (err) {
+      // A real failure (network, RLS-unrelated Supabase error), not a
+      // version conflict — updateDiagram only returns { conflict: true }
+      // for PGRST116 and throws everything else. Must not fall through to
+      // the conflict message below, which would misleadingly tell the user
+      // "someone else edited this" for an unrelated failure.
+      return `Failed to save: ${(err as Error).message}`
+    }
+    if ('conflict' in result) {
+      setConflictMessage(
+        'This diagram changed since you loaded it (edited elsewhere or by an MCP-connected agent). Reload to see the latest version before retrying.'
+      )
+      return 'Save conflict: the diagram was updated elsewhere. Reload and reapply your changes.'
+    }
+    setConflictMessage(null)
+    const refreshed = await resolveDiagramPath(projectId!, segments, getDiagram)
+    setResolution({ status: 'ready', chain: refreshed.chain })
+    return null
   }
 
   return (
@@ -109,7 +145,17 @@ export function DiagramPage() {
         boxSizing: 'border-box',
       }}
     >
-      <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
+      {conflictMessage && (
+        <div role="alert" style={{ color: 'var(--error)', fontSize: 13 }}>
+          {conflictMessage}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
+        <Link to={`/projects/${projectId}/share`} style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          Share
+        </Link>
+      </div>
       <div style={{ flex: 1, display: 'flex', gap: 12, minHeight: 0 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <DiagramCanvas
