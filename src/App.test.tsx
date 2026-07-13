@@ -16,6 +16,11 @@ vi.mock('./lib/diagramRepo', () => ({
   updateDiagram: vi.fn(),
 }))
 
+vi.mock('./lib/collaboratorRepo', () => ({
+  listCollaborators: vi.fn().mockResolvedValue([]),
+  inviteCollaborator: vi.fn(),
+}))
+
 import { getDiagram } from './lib/diagramRepo'
 
 const deployment: Diagram = {
@@ -36,5 +41,18 @@ describe('App', () => {
     render(<App />)
     await waitFor(() => expect(screen.getByText('Home')).toBeInTheDocument())
     expect(await screen.findByText('API Service')).toBeInTheDocument()
+  })
+
+  it('routes /projects/:projectId/share to ShareProjectPanel, not DiagramPage as a splat segment', async () => {
+    // Regression guard: /projects/:projectId/* (DiagramPage's catch-all)
+    // and /projects/:projectId/share are declared as siblings in the same
+    // <Routes> tree. React Router v6 is documented to rank the static
+    // "share" segment above the splat, but that ranking has had
+    // inconsistent edge cases reported upstream — assert the actual
+    // rendered component instead of trusting the ranking rules alone.
+    window.history.pushState({}, '', '/projects/test-project-id/share')
+    render(<App />)
+    expect(await screen.findByText('Collaborators')).toBeInTheDocument()
+    expect(screen.queryByText('Diagram not found')).not.toBeInTheDocument()
   })
 })
