@@ -78,6 +78,29 @@ describe('validateDiagramShape', () => {
     }
     expect(() => validateDiagramShape(raw, 'x')).toThrow(/ghost/)
   })
+
+  it('rejects an unrecognized field on a node instead of silently dropping it', () => {
+    const raw = {
+      id: 'x',
+      title: 'X',
+      nodes: [{ id: 'a', label: 'A', kind: 'service', parent: 'host' }],
+      edges: [],
+    }
+    expect(() => validateDiagramShape(raw, 'x')).toThrow(/unrecognized field.*parent/i)
+  })
+
+  it('rejects an unrecognized field on an edge', () => {
+    const raw = {
+      id: 'x',
+      title: 'X',
+      nodes: [
+        { id: 'a', label: 'A', kind: 'service' },
+        { id: 'b', label: 'B', kind: 'service' },
+      ],
+      edges: [{ from: 'a', to: 'b', weight: 5 }],
+    }
+    expect(() => validateDiagramShape(raw, 'x')).toThrow(/unrecognized field.*weight/i)
+  })
 })
 
 describe('checkCrossFileReferences', () => {

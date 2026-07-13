@@ -12,6 +12,32 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((v) => typeof v === 'string')
 }
 
+const NODE_FIELDS = new Set([
+  'id', 'label', 'kind', 'childDiagram', 'x', 'y', 'responsibility',
+  'techStack', 'dataOwned', 'gotchas', 'attributes', 'operations', 'sourceRefs',
+])
+const EDGE_FIELDS = new Set(['from', 'to', 'label', 'relationship', 'order', 'async', 'condition'])
+
+// Rejects any field not in the schema, instead of silently ignoring it —
+// see mcp-server/src/validateDiagramShape.ts (kept in sync manually with
+// this file) for the incident that motivated this: an undocumented field
+// passing validation with no error gave no signal it wasn't a real
+// mechanism.
+function assertNoUnknownFields(
+  obj: Record<string, unknown>,
+  allowed: ReadonlySet<string>,
+  diagramId: string,
+  context: string
+): void {
+  const unknown = Object.keys(obj).filter((k) => !allowed.has(k))
+  if (unknown.length > 0) {
+    throw new InvalidDiagramError(
+      diagramId,
+      `${context} has unrecognized field(s): ${unknown.join(', ')}. Valid fields: ${Array.from(allowed).join(', ')}`
+    )
+  }
+}
+
 export function validateDiagramShape(raw: unknown, diagramId: string): Diagram {
   if (typeof raw !== 'object' || raw === null) {
     throw new InvalidDiagramError(diagramId, 'not an object')
@@ -54,6 +80,7 @@ export function validateDiagramShape(raw: unknown, diagramId: string): Diagram {
         throw new InvalidDiagramError(diagramId, `node "${node.id}" has invalid "${field}" (must be string[])`)
       }
     }
+    assertNoUnknownFields(node, NODE_FIELDS, diagramId, `node "${node.id}"`)
   })
 
   d.edges.forEach((e, i) => {
@@ -85,6 +112,7 @@ export function validateDiagramShape(raw: unknown, diagramId: string): Diagram {
         `edge "${edge.from}->${edge.to}" has invalid "condition" (must be string)`
       )
     }
+    assertNoUnknownFields(edge, EDGE_FIELDS, diagramId, `edge "${edge.from}->${edge.to}"`)
   })
 
   const nodeIds = new Set(d.nodes.map((n) => (n as { id: string }).id))
