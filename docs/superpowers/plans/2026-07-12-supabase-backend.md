@@ -526,19 +526,31 @@ create policy "users manage their own mcp grants" on mcp_project_grants
 
 -- MCP-originated requests (JWT carries is_mcp_request: true) additionally
 -- require a matching grant row, on top of the existing owner/member policies.
+-- WITH CHECK (true) is required here, separate from USING: a `for all`
+-- policy with only a USING clause reuses that USING as its WITH CHECK for
+-- INSERT too — which would make an MCP-flagged create_project's own INSERT
+-- get rejected for lacking a grant row that can't exist yet (the grant is
+-- created in the statement immediately after the project insert, by
+-- design — see the MCP server plan's create_project tool). Splitting them
+-- lets any authenticated insert create the row (still gated by the
+-- separately-existing owner/editor policies below, which combine via AND
+-- since all are restrictive-or-default-permissive on the same command),
+-- while SELECT/UPDATE/DELETE still require the grant via USING.
 create policy "mcp requests require an explicit grant on projects" on projects
-  for all using (
+  as restrictive for all using (
     coalesce((auth.jwt() ->> 'is_mcp_request')::boolean, false) = false
     or exists (select 1 from mcp_project_grants g
                where g.project_id = projects.id and g.user_id = auth.uid())
-  );
+  )
+  with check (true);
 
 create policy "mcp requests require an explicit grant on diagrams" on diagrams
-  for all using (
+  as restrictive for all using (
     coalesce((auth.jwt() ->> 'is_mcp_request')::boolean, false) = false
     or exists (select 1 from mcp_project_grants g
                where g.project_id = diagrams.project_id and g.user_id = auth.uid())
-  );
+  )
+  with check (true);
 ```
 
 - [ ] **Step 3: Apply the migration**
@@ -604,6 +616,46 @@ rollback;
 Run: `supabase test db`
 Expected: iterate as in prior tasks (including the restrictive-policy fix
 from Step 3 if needed) until `3/3` pass.
+
+- [ ] **Step 5a: Write a bootstrap-order test proving create_project's
+  INSERT is never blocked by its own missing grant**
+
+The Step 4 test only exercises SELECT with/without a grant — it doesn't
+prove the INSERT itself succeeds for an MCP-flagged caller before any grant
+row exists, which is exactly the sequence `create_project` (a later,
+separate MCP server plan task) depends on: insert the project, THEN insert
+its grant. Create `supabase/tests/database/mcp_create_project_bootstrap.test.sql`:
+
+```sql
+begin;
+select plan(2);
+
+select tests.create_supabase_user('mcp_bootstrap@example.com');
+select tests.authenticate_as('mcp_bootstrap@example.com');
+
+select set_config('request.jwt.claims',
+  '{"sub":"' || tests.get_supabase_uid('mcp_bootstrap@example.com') || '","is_mcp_request":true}',
+  true);
+
+select lives_ok(
+  $$insert into projects (id, owner_id, name)
+    values ('77777777-7777-7777-7777-777777777777', tests.get_supabase_uid('mcp_bootstrap@example.com'), 'MCP Bootstrap Test')$$,
+  'mcp-flagged create_project insert succeeds with no pre-existing grant (bootstrap fix)'
+);
+
+select is_empty(
+  $$select 1 from projects where id = '77777777-7777-7777-7777-777777777777'$$,
+  'mcp-flagged session cannot read the just-created project back without a grant row'
+);
+
+select * from finish();
+rollback;
+```
+
+Run: `supabase test db`
+Expected: `2/2` pass. If the INSERT fails, the `with check (true)` split
+from Step 2 is missing or wrong — re-check that the `projects`/`diagrams`
+policies have a separate `with check (true)` and not just a bare `using`.
 
 - [ ] **Step 6: Run the full test suite to confirm no regressions**
 
