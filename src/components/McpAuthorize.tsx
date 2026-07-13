@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { BrandMark } from './AppHeader'
 
 const mcpServerUrl = import.meta.env.VITE_MCP_SERVER_URL ?? 'http://localhost:8787'
 
@@ -92,8 +93,12 @@ export function McpAuthorize() {
 
   if (!flowId) {
     return (
-      <div style={{ padding: 24 }}>
-        <p role="alert">Missing or invalid authorization request.</p>
+      <div className="auth-shell">
+        <div className="auth-card">
+          <p role="alert" className="alert">
+            Missing or invalid authorization request.
+          </p>
+        </div>
       </div>
     )
   }
@@ -101,32 +106,40 @@ export function McpAuthorize() {
   if (status === 'loading') return null
 
   return (
-    <div style={{ padding: 24, maxWidth: 480 }}>
-      <h1>Authorize MCP access</h1>
-      <p>
-        An MCP-connected AI agent (e.g. Claude Code) is requesting access to your
-        architecture-map account
-        {requestedScope && <> (requested: <code>{requestedScope}</code>)</>}. Choose what to grant it — it
-        will only be able to reach projects you explicitly grant it from{' '}
-        <code>/settings/integrations</code>.
-      </p>
-      <fieldset style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, marginBottom: 12 }}>
-        <legend>Grant scopes</legend>
-        {(Object.keys(SCOPE_DESCRIPTIONS) as Array<'read' | 'write' | 'admin'>).map((scope) => (
-          <label key={scope} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <input
-              type="checkbox"
-              checked={grantedScopes.has(scope)}
-              onChange={() => toggleScope(scope)}
-            />
-            <span>
-              <strong>{scope}</strong> — {SCOPE_DESCRIPTIONS[scope]}
-            </span>
-          </label>
-        ))}
-      </fieldset>
-      {error && <p role="alert">{error}</p>}
-      <div style={{ display: 'flex', gap: 8 }}>
+    <div className="auth-shell">
+      <div className="auth-card auth-card-wide">
+        <BrandMark size={32} />
+        <h1>Authorize access</h1>
+        <p className="auth-card-copy">
+          An MCP-connected AI agent (e.g. Claude Code) is requesting access to your Cartogram account
+          {requestedScope && (
+            <>
+              {' '}
+              — requested <code>{requestedScope}</code>
+            </>
+          )}
+          . Choose what to grant it — it will only reach projects you explicitly grant from Settings.
+        </p>
+        <div className="scope-list">
+          {(Object.keys(SCOPE_DESCRIPTIONS) as Array<'read' | 'write' | 'admin'>).map((scope) => (
+            <label key={scope} className="scope-item">
+              <input
+                type="checkbox"
+                checked={grantedScopes.has(scope)}
+                onChange={() => toggleScope(scope)}
+              />
+              <span>
+                <span className="scope-item-name">{scope}</span>
+                <span className="scope-item-desc">{SCOPE_DESCRIPTIONS[scope]}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        {error && (
+          <p role="alert" className="alert">
+            {error}
+          </p>
+        )}
         <button
           className="btn btn-primary"
           onClick={handleAuthorize}
