@@ -124,6 +124,31 @@ describe('DiagramPage', () => {
     expect(screen.queryByText(/Save conflict/)).not.toBeInTheDocument()
   })
 
+  it('does not crash when the project has no "deployment" diagram at all, and offers the picker to escape', async () => {
+    // The real-world case this was fixed from: a project whose only
+    // diagram was created directly under a non-"deployment" slug (by the
+    // MCP server) has nothing at the root route. getDiagram raised the raw
+    // Supabase/PostgREST error (not a DiagramNotFoundError) for the
+    // missing 'deployment' row — before the fix, that propagated
+    // unhandled and crashed the page instead of landing in the normal
+    // "not found" state where the picker is reachable.
+    vi.mocked(diagramRepo.getDiagram).mockImplementation(async (_projectId, slug) => {
+      if (slug === 'deployment') throw new Error('PGRST116: The result contains 0 rows')
+      const diagram = diagrams[slug]
+      if (!diagram) throw new DiagramNotFoundError(slug)
+      return { diagram, version: 1 }
+    })
+    vi.mocked(diagramRepo.listDiagrams).mockResolvedValue([{ slug: 'orphaned', title: 'Orphaned Diagram' }])
+
+    renderAt('/projects/test-project-id/')
+
+    expect(await screen.findByText('Diagram not found')).toBeInTheDocument()
+    const picker = await screen.findByLabelText('Diagram')
+    fireEvent.change(picker, { target: { value: 'orphaned' } })
+
+    expect(await screen.findByText('Lonely Node')).toBeInTheDocument()
+  })
+
   it('lets the user open a diagram that is not linked into the deployment tree via the picker', async () => {
     // Regression guard: create_diagram (MCP or otherwise) can create a
     // diagram with no childDiagram anywhere pointing to it — before the

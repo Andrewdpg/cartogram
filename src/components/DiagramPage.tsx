@@ -57,6 +57,35 @@ export function DiagramPage() {
     listDiagrams(projectId).then(setAvailableDiagrams)
   }, [projectId])
 
+  function handleDiagramSelect(slug: string) {
+    setSelectedNodeId(null)
+    const query = slug !== 'deployment' ? `?diagram=${encodeURIComponent(slug)}` : ''
+    navigate(`/projects/${projectId}/${query}`)
+  }
+
+  // Shown whenever the project has at least one diagram — including the
+  // "not found" state below, where it's the only way to reach a diagram
+  // that exists but isn't (or is no longer) named 'deployment'. A project
+  // with exactly one diagram still needs it visible: if that one diagram
+  // isn't 'deployment', the root route can't resolve it without this.
+  const diagramPicker = availableDiagrams.length > 0 && (
+    <label style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+      Diagram:{' '}
+      <select aria-label="Diagram" value={rootSlug} onChange={(e) => handleDiagramSelect(e.target.value)}>
+        {!availableDiagrams.some((d) => d.slug === rootSlug) && (
+          <option value={rootSlug} disabled>
+            {rootSlug} (not found)
+          </option>
+        )}
+        {availableDiagrams.map((d) => (
+          <option key={d.slug} value={d.slug}>
+            {d.title}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+
   if (resolution.status === 'loading') return null
 
   if (resolution.status === 'error') {
@@ -68,7 +97,7 @@ export function DiagramPage() {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100dvh',
-          gap: 8,
+          gap: 12,
           background: 'var(--bg)',
           color: 'var(--text)',
           fontFamily: 'var(--font-ui)',
@@ -78,6 +107,7 @@ export function DiagramPage() {
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-muted)' }}>
           {resolution.notFoundId}
         </span>
+        {diagramPicker}
       </div>
     )
   }
@@ -106,12 +136,6 @@ export function DiagramPage() {
   function handleBreadcrumbNavigate(index: number) {
     setSelectedNodeId(null)
     navigate(`/projects/${projectId}/${segments.slice(0, index).join('/')}${diagramQuery}`)
-  }
-
-  function handleDiagramSelect(slug: string) {
-    setSelectedNodeId(null)
-    const query = slug !== 'deployment' ? `?diagram=${encodeURIComponent(slug)}` : ''
-    navigate(`/projects/${projectId}/${query}`)
   }
 
   async function handleApplyJson(raw: string): Promise<string | null> {
@@ -177,22 +201,7 @@ export function DiagramPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {availableDiagrams.length > 1 && (
-            <label style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              Diagram:{' '}
-              <select
-                aria-label="Diagram"
-                value={rootSlug}
-                onChange={(e) => handleDiagramSelect(e.target.value)}
-              >
-                {availableDiagrams.map((d) => (
-                  <option key={d.slug} value={d.slug}>
-                    {d.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          {diagramPicker}
           <Link to={`/projects/${projectId}/share`} style={{ fontSize: 13, color: 'var(--text-muted)' }}>
             Share
           </Link>
