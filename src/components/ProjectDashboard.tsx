@@ -36,7 +36,7 @@ export function ProjectDashboard() {
     <div className="app-shell">
       <AppHeader />
       <div className="dashboard-body">
-        <h1>Tus proyectos</h1>
+        <h1>Your projects</h1>
         <p className="dashboard-hint">
           {projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'}
         </p>
