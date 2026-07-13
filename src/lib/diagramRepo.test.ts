@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockFrom = vi.fn()
+const mockGetUser = vi.fn()
 vi.mock('./supabaseClient', () => ({
-  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
+  supabase: {
+    from: (...args: unknown[]) => mockFrom(...args),
+    auth: { getUser: (...args: unknown[]) => mockGetUser(...args) },
+  },
 }))
 
 import { getDiagram, updateDiagram, createDiagram, listProjects, createProject } from './diagramRepo'
@@ -90,6 +94,7 @@ describe('listProjects / createProject', () => {
   })
 
   it('creates a project', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
     mockFrom.mockReturnValue(chainable({ data: { id: 'p2', name: 'New Proj' }, error: null }))
     const result = await createProject('New Proj')
     expect(result).toEqual({ id: 'p2', name: 'New Proj' })

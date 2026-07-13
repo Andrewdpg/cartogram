@@ -9,15 +9,19 @@ export async function listProjects(): Promise<{ id: string; name: string }[]> {
 }
 
 export async function createProject(name: string): Promise<{ id: string; name: string }> {
-  // NOTE: owner_id is required NOT NULL by the projects table and its RLS
-  // insert policy checks owner_id = auth.uid() — but the brief's test only
-  // mocks `from`, not `auth.getUser`, so this omits owner_id to match the
-  // brief's test contract. This will fail against the real schema. Flagged
-  // in the task report; needs a decision (client passes owner_id + test
-  // gets an auth mock, or a trigger sets owner_id server-side).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  // owner_id is required here, not optional: the projects table has
+  // owner_id uuid not null with no column default (see the Supabase
+  // backend plan's Task 2), and its RLS insert policy is
+  // `with check (owner_id = auth.uid())` — the check evaluates the row as
+  // sent, so the client must supply owner_id itself, a server-side
+  // trigger/default would not satisfy the check.
   const { data, error } = await supabase
     .from('projects')
-    .insert({ name })
+    .insert({ name, owner_id: user.id })
     .select('id, name')
     .single()
   if (error) throw error
