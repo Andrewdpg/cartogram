@@ -73,6 +73,15 @@ describe('updateDiagram', () => {
     const result = await updateDiagram('proj-1', 'deployment', { nodes: [], edges: [] }, 3)
     expect(result).toEqual({ conflict: true })
   })
+
+  it('throws (does not report a conflict) for a real error unrelated to version staleness', async () => {
+    mockFrom.mockReturnValue(
+      chainable({ data: null, error: { code: '57014', message: 'statement timeout' } })
+    )
+    await expect(
+      updateDiagram('proj-1', 'deployment', { nodes: [], edges: [] }, 3)
+    ).rejects.toEqual({ code: '57014', message: 'statement timeout' })
+  })
 })
 
 describe('createDiagram', () => {

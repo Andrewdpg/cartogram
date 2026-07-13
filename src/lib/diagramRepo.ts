@@ -80,9 +80,18 @@ export async function updateDiagram(
     .select('version')
     .single()
 
-  if (error || !data) {
+  // PGRST116 ("no rows returned") is what PostgREST reports both for a
+  // genuinely stale version AND for an RLS-blocked update (viewer role, or
+  // permissions revoked mid-session) — Postgres silently filters the row in
+  // either case, there's no SQL-level way to tell them apart, and both are
+  // legitimately "you couldn't write this row right now." Any OTHER error
+  // (network failure, malformed request, etc.) is a real failure, not a
+  // conflict, and must not be swallowed into the same misleading "someone
+  // else edited this" message the caller shows the user.
+  if (error?.code === 'PGRST116') {
     return { conflict: true }
   }
+  if (error) throw error
   return { version: data.version }
 }
 

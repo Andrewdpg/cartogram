@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getDiagram, updateDiagram } from '../lib/diagramRepo'
 import { resolveDiagramPath } from '../lib/resolveDiagramPath'
 import { validateDiagramShape } from '../lib/validateDiagram'
@@ -105,12 +105,22 @@ export function DiagramPage() {
     }
 
     const currentSlug = segments.length === 0 ? 'deployment' : current.id
-    const result = await updateDiagram(
-      projectId!,
-      currentSlug,
-      { nodes: diagram.nodes, edges: diagram.edges },
-      currentVersion
-    )
+    let result: Awaited<ReturnType<typeof updateDiagram>>
+    try {
+      result = await updateDiagram(
+        projectId!,
+        currentSlug,
+        { nodes: diagram.nodes, edges: diagram.edges },
+        currentVersion
+      )
+    } catch (err) {
+      // A real failure (network, RLS-unrelated Supabase error), not a
+      // version conflict — updateDiagram only returns { conflict: true }
+      // for PGRST116 and throws everything else. Must not fall through to
+      // the conflict message below, which would misleadingly tell the user
+      // "someone else edited this" for an unrelated failure.
+      return `Failed to save: ${(err as Error).message}`
+    }
     if ('conflict' in result) {
       setConflictMessage(
         'This diagram changed since you loaded it (edited elsewhere or by an MCP-connected agent). Reload to see the latest version before retrying.'
@@ -140,7 +150,12 @@ export function DiagramPage() {
           {conflictMessage}
         </div>
       )}
-      <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
+        <Link to={`/projects/${projectId}/share`} style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          Share
+        </Link>
+      </div>
       <div style={{ flex: 1, display: 'flex', gap: 12, minHeight: 0 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <DiagramCanvas

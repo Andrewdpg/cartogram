@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { DiagramPage } from './DiagramPage'
@@ -85,5 +85,34 @@ describe('DiagramPage', () => {
   it('renders a not-found state for a bad path', async () => {
     renderAt('/projects/test-project-id/does-not-exist')
     await waitFor(() => expect(screen.getByText(/not found/i)).toBeInTheDocument())
+  })
+
+  it('shows a save-failed message (not the version-conflict message) when updateDiagram throws a non-conflict error', async () => {
+    // Regression guard: updateDiagram only resolves { conflict: true } for
+    // PGRST116 (stale version) and throws every other error. Before this
+    // fix, handleApplyJson had no try/catch around the updateDiagram call,
+    // so any real failure (network, unexpected Supabase error) propagated
+    // as an unhandled rejection instead of surfacing to the user at all.
+    vi.mocked(diagramRepo.updateDiagram).mockRejectedValue(new Error('network unreachable'))
+    renderAt('/projects/test-project-id/')
+    await waitFor(() => expect(screen.getByText('API Service')).toBeInTheDocument())
+
+    await userEvent.click(screen.getByText('Edit JSON'))
+    const textarea = screen.getByLabelText('Diagram JSON')
+    fireEvent.change(textarea, {
+      target: {
+        value: JSON.stringify({
+          id: 'deployment',
+          title: 'Deployment',
+          notation: 'c4',
+          nodes: [{ id: 'api', label: 'API Service', kind: 'service' }],
+          edges: [],
+        }),
+      },
+    })
+    await userEvent.click(screen.getByText('Apply'))
+
+    expect(await screen.findByText(/Failed to save: network unreachable/)).toBeInTheDocument()
+    expect(screen.queryByText(/Save conflict/)).not.toBeInTheDocument()
   })
 })
