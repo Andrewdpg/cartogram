@@ -79,7 +79,16 @@ export function DiagramPage() {
   // needs it visible: the root route can't resolve that diagram without
   // this.
   const diagramPicker = availableDiagrams.length > 0 && (
-    <label style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+    <label
+      style={{
+        fontSize: 13,
+        color: 'var(--text-muted)',
+        background: 'var(--surface)',
+        boxShadow: 'var(--shadow-float)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '8px 14px',
+      }}
+    >
       Diagram:{' '}
       <select aria-label="Diagram" value={rootSlug} onChange={(e) => handleDiagramSelect(e.target.value)}>
         {!pickerOptions.some((d) => d.slug === rootSlug) && (
@@ -143,11 +152,6 @@ export function DiagramPage() {
     setSelectedNodeId(nodeId)
     setPanelCollapsed(false)
     setActiveTab('details')
-  }
-
-  function handleShareClick() {
-    setPanelCollapsed(false)
-    setActiveTab('share')
   }
 
   function handleBreadcrumbNavigate(index: number) {
@@ -216,17 +220,23 @@ export function DiagramPage() {
           {conflictMessage}
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {diagramPicker}
-          <button className="btn" aria-label="Open share panel" onClick={handleShareClick}>
-            Share
-          </button>
-        </div>
-      </div>
       <div style={{ flex: 1, display: 'flex', gap: 12, minHeight: 0 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              zIndex: 5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              maxWidth: 'calc(100% - 24px)',
+            }}
+          >
+            <Breadcrumb labels={labels} onNavigate={handleBreadcrumbNavigate} />
+            {diagramPicker}
+          </div>
           <DiagramCanvas
             nodes={positionedNodes}
             edges={current.edges}

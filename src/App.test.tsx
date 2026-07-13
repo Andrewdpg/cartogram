@@ -60,10 +60,12 @@ describe('App', () => {
     // Sharing used to be its own route (/projects/:projectId/share); it's
     // now a tab in the same SidePanel used for node details/JSON/legend,
     // so there's no page navigation and no way to get "stuck" off-canvas.
+    // There's also no dedicated toolbar trigger anymore — the tab itself
+    // is the only entry point.
     window.history.pushState({}, '', '/projects/test-project-id/')
     render(<App />)
     await waitFor(() => expect(screen.getByText('Home')).toBeInTheDocument())
-    await userEvent.click(screen.getByLabelText('Open share panel'))
+    await userEvent.click(screen.getByText('Share'))
     expect(await screen.findByLabelText('Collaborator email')).toBeInTheDocument()
   })
 })
