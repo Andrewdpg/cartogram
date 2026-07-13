@@ -14,6 +14,8 @@ vi.mock('./lib/useSession', () => ({
 vi.mock('./lib/diagramRepo', () => ({
   getDiagram: vi.fn(),
   updateDiagram: vi.fn(),
+  listProjects: vi.fn().mockResolvedValue([]),
+  createProject: vi.fn(),
 }))
 
 vi.mock('./lib/collaboratorRepo', () => ({
@@ -41,6 +43,15 @@ describe('App', () => {
     render(<App />)
     await waitFor(() => expect(screen.getByText('Home')).toBeInTheDocument())
     expect(await screen.findByText('API Service')).toBeInTheDocument()
+  })
+
+  it('redirects / to /projects instead of matching no route', async () => {
+    // Regression guard: the root path "/" had no <Route> at all — hitting it
+    // rendered a blank page with "No routes matched location /" in the
+    // console, no error boundary, nothing user-visible.
+    window.history.pushState({}, '', '/')
+    render(<App />)
+    expect(await screen.findByText('Your projects')).toBeInTheDocument()
   })
 
   it('routes /projects/:projectId/share to ShareProjectPanel, not DiagramPage as a splat segment', async () => {

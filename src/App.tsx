@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from './components/LoginPage'
 import { RequireAuth } from './components/RequireAuth'
 import { DiagramPage } from './components/DiagramPage'
@@ -10,6 +10,7 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route
           path="/projects"
