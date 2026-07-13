@@ -1,31 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockFrom = vi.fn()
 const mockRpc = vi.fn()
 vi.mock('./supabaseClient', () => ({
-  supabase: { from: (...args: unknown[]) => mockFrom(...args), rpc: (...args: unknown[]) => mockRpc(...args) },
+  supabase: { rpc: (...args: unknown[]) => mockRpc(...args) },
 }))
 
 import { listCollaborators, inviteCollaborator } from './collaboratorRepo'
 
 beforeEach(() => {
-  mockFrom.mockReset()
   mockRpc.mockReset()
 })
 
 describe('listCollaborators', () => {
-  it('returns member rows with email and role', async () => {
-    mockFrom.mockReturnValue({
-      select: () => ({
-        eq: () =>
-          Promise.resolve({
-            data: [{ user_id: 'u1', role: 'viewer', users: { email: 'a@example.com' } }],
-            error: null,
-          }),
-      }),
+  it('returns member rows with email and role via the list_collaborators_with_email rpc', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ user_id: 'u1', email: 'a@example.com', role: 'viewer' }],
+      error: null,
     })
     const result = await listCollaborators('proj-1')
+    expect(mockRpc).toHaveBeenCalledWith('list_collaborators_with_email', { p_project_id: 'proj-1' })
     expect(result).toEqual([{ userId: 'u1', email: 'a@example.com', role: 'viewer' }])
+  })
+
+  it('throws when the rpc errors (e.g. caller lacks access to the project)', async () => {
+    mockRpc.mockResolvedValue({ error: { message: "not authorized to view this project's collaborators" } })
+    await expect(listCollaborators('proj-1')).rejects.toThrow(
+      "not authorized to view this project's collaborators"
+    )
   })
 })
 

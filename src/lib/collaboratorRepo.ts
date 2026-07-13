@@ -7,14 +7,18 @@ export interface Collaborator {
 }
 
 export async function listCollaborators(projectId: string): Promise<Collaborator[]> {
-  const { data, error } = await supabase
-    .from('project_members')
-    .select('user_id, role, users:user_id(email)')
-    .eq('project_id', projectId)
-  if (error) throw error
-  return (data ?? []).map((row: any) => ({
+  // project_members.user_id references auth.users, which PostgREST cannot
+  // embed directly (only public/graphql_public schemas are exposed via the
+  // API) — list_collaborators_with_email is a security definer RPC that
+  // resolves the join server-side, the same pattern
+  // invite_collaborator_by_email already uses to read auth.users.
+  const { data, error } = await supabase.rpc('list_collaborators_with_email', {
+    p_project_id: projectId,
+  })
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row: { user_id: string; email: string; role: 'viewer' | 'editor' }) => ({
     userId: row.user_id,
-    email: row.users.email,
+    email: row.email,
     role: row.role,
   }))
 }

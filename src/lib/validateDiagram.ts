@@ -30,7 +30,7 @@ export function validateDiagramShape(raw: unknown, diagramId: string): Diagram {
     if (typeof n !== 'object' || n === null) {
       throw new InvalidDiagramError(diagramId, `node at index ${i} is not an object`)
     }
-    const node = n as Record<string, unknown>
+    const node = n as unknown as Record<string, unknown>
     if (typeof node.id !== 'string') {
       throw new InvalidDiagramError(diagramId, `node at index ${i} missing "id"`)
     }
@@ -60,7 +60,7 @@ export function validateDiagramShape(raw: unknown, diagramId: string): Diagram {
     if (typeof e !== 'object' || e === null) {
       throw new InvalidDiagramError(diagramId, `edge at index ${i} is not an object`)
     }
-    const edge = e as Record<string, unknown>
+    const edge = e as unknown as Record<string, unknown>
     if (typeof edge.from !== 'string') {
       throw new InvalidDiagramError(diagramId, `edge at index ${i} missing "from"`)
     }
