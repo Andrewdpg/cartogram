@@ -23,6 +23,25 @@ The side panel has three tabs:
 - **Legend** — every node shape and edge style rendered live, so it can't
   drift from what's actually on screen.
 
+## Backend (Supabase)
+
+Diagrams are stored in Supabase (Postgres), not local files. To run the
+backend locally:
+
+    supabase start
+
+This starts a local Postgres + Auth stack via Docker and prints an API URL,
+anon key, and service_role key. Apply schema changes with:
+
+    supabase db reset
+
+Run the RLS/access-control test suite with:
+
+    supabase test db
+
+Schema and policies live under `supabase/migrations/`; access-control tests
+live under `supabase/tests/database/`.
+
 ## Authoring diagrams
 
 Every diagram is one JSON file under `diagrams/`. See `diagrams/deployment.json`
