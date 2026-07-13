@@ -23,6 +23,14 @@ function chainable(result: unknown) {
   return chain
 }
 
+// listDiagrams' query is select().eq() with no further chained call — eq()
+// itself must resolve the promise, unlike every other query in this file
+// (getDiagram's select().eq().eq().single(), etc.) where eq() returns the
+// chain to keep building further calls.
+function listDiagramsChainable(result: unknown) {
+  return { select: () => ({ eq: () => Promise.resolve(result) }) }
+}
+
 beforeEach(() => {
   mockFrom.mockReset()
 })
@@ -59,19 +67,53 @@ describe('getDiagram', () => {
 })
 
 describe('listDiagrams', () => {
-  it('lists every diagram in a project, ordered by title', async () => {
+  it('excludes "deployment" even when nothing points to it — it is the tree root by convention', async () => {
     mockFrom.mockReturnValue(
-      chainable({
+      listDiagramsChainable({
+        data: [{ slug: 'deployment', title: 'Deployment', content: { nodes: [] } }],
+        error: null,
+      })
+    )
+    const result = await listDiagrams('proj-1')
+    expect(result).toEqual([])
+  })
+
+  it('excludes a diagram some other diagram already reaches via childDiagram', async () => {
+    mockFrom.mockReturnValue(
+      listDiagramsChainable({
         data: [
-          { slug: 'deployment', title: 'Deployment' },
-          { slug: 'servicios-primera-capa', title: 'QANTYR — Servicios (primera capa)' },
+          {
+            slug: 'deployment',
+            title: 'Deployment',
+            content: { nodes: [{ id: 'api', childDiagram: 'api-components' }] },
+          },
+          { slug: 'api-components', title: 'API Components', content: { nodes: [] } },
+        ],
+        error: null,
+      })
+    )
+    const result = await listDiagrams('proj-1')
+    expect(result).toEqual([])
+  })
+
+  it('includes a diagram no other diagram reaches, ordered by title', async () => {
+    mockFrom.mockReturnValue(
+      listDiagramsChainable({
+        data: [
+          { slug: 'deployment', title: 'Deployment', content: { nodes: [] } },
+          {
+            slug: 'servicios-primera-capa',
+            title: 'QANTYR — Servicios (primera capa)',
+            content: { nodes: [] },
+          },
+          { slug: 'aaa-first', title: 'AAA First', content: { nodes: [] } },
         ],
         error: null,
       })
     )
     const result = await listDiagrams('proj-1')
     expect(result).toEqual([
-      { slug: 'deployment', title: 'Deployment' },
+      { slug: 'aaa-first', title: 'AAA First' },
       { slug: 'servicios-primera-capa', title: 'QANTYR — Servicios (primera capa)' },
     ])
   })

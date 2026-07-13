@@ -63,21 +63,30 @@ export function DiagramPage() {
     navigate(`/projects/${projectId}/${query}`)
   }
 
-  // Shown whenever the project has at least one diagram — including the
-  // "not found" state below, where it's the only way to reach a diagram
-  // that exists but isn't (or is no longer) named 'deployment'. A project
-  // with exactly one diagram still needs it visible: if that one diagram
-  // isn't 'deployment', the root route can't resolve it without this.
+  // listDiagrams only returns orphans (no other diagram's childDiagram
+  // reaches them) — 'deployment' is deliberately excluded from that list
+  // since it's the tree root, always reachable at the project's base URL.
+  // It still needs a fixed entry here though: without one, a user who
+  // picked an orphan would have no way back to the main tree from this
+  // dropdown at all.
+  const pickerOptions = [{ slug: 'deployment', title: 'Deployment' }, ...availableDiagrams]
+
+  // Shown whenever the project has at least one orphaned diagram —
+  // including the "not found" state below, where it's the only way to
+  // reach a diagram that exists but isn't (or is no longer) named
+  // 'deployment'. A project whose only diagram isn't 'deployment' still
+  // needs it visible: the root route can't resolve that diagram without
+  // this.
   const diagramPicker = availableDiagrams.length > 0 && (
     <label style={{ fontSize: 13, color: 'var(--text-muted)' }}>
       Diagram:{' '}
       <select aria-label="Diagram" value={rootSlug} onChange={(e) => handleDiagramSelect(e.target.value)}>
-        {!availableDiagrams.some((d) => d.slug === rootSlug) && (
+        {!pickerOptions.some((d) => d.slug === rootSlug) && (
           <option value={rootSlug} disabled>
             {rootSlug} (not found)
           </option>
         )}
-        {availableDiagrams.map((d) => (
+        {pickerOptions.map((d) => (
           <option key={d.slug} value={d.slug}>
             {d.title}
           </option>

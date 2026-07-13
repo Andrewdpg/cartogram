@@ -155,10 +155,10 @@ describe('DiagramPage', () => {
     // picker, that diagram was permanently unreachable from the UI short
     // of hand-constructing a URL. ?diagram=<slug> opens it directly,
     // bypassing the deployment-tree walk.
-    vi.mocked(diagramRepo.listDiagrams).mockResolvedValue([
-      { slug: 'deployment', title: 'Deployment' },
-      { slug: 'orphaned', title: 'Orphaned Diagram' },
-    ])
+    // listDiagrams only ever returns orphans (deployment is excluded by
+    // convention, see diagramRepo.ts) — DiagramPage adds the fixed
+    // "Deployment" option to the picker itself.
+    vi.mocked(diagramRepo.listDiagrams).mockResolvedValue([{ slug: 'orphaned', title: 'Orphaned Diagram' }])
     renderAt('/projects/test-project-id/')
     await waitFor(() => expect(screen.getByText('API Service')).toBeInTheDocument())
 
@@ -166,5 +166,19 @@ describe('DiagramPage', () => {
     fireEvent.change(picker, { target: { value: 'orphaned' } })
 
     expect(await screen.findByText('Lonely Node')).toBeInTheDocument()
+  })
+
+  it('always offers "Deployment" as a fixed picker option, so an orphan does not strand the user there', async () => {
+    // listDiagrams excludes 'deployment' from its result (it's never an
+    // orphan by definition), but the picker still needs a way back to the
+    // main tree from wherever an orphan diagram left the user.
+    vi.mocked(diagramRepo.listDiagrams).mockResolvedValue([{ slug: 'orphaned', title: 'Orphaned Diagram' }])
+    renderAt('/projects/test-project-id/?diagram=orphaned')
+    await waitFor(() => expect(screen.getByText('Lonely Node')).toBeInTheDocument())
+
+    const picker = await screen.findByLabelText('Diagram')
+    fireEvent.change(picker, { target: { value: 'deployment' } })
+
+    expect(await screen.findByText('API Service')).toBeInTheDocument()
   })
 })

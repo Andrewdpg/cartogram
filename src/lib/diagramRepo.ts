@@ -42,16 +42,34 @@ export async function createProject(name: string): Promise<{ id: string; name: s
   return data
 }
 
+// Lists only diagrams no other diagram in the project reaches via a
+// childDiagram — the ones that need a manual entry point because
+// drill-down can never lead to them. Diagrams created directly (e.g. by
+// create_diagram via the MCP server, with no parent node wired up) are
+// exactly this case. 'deployment' is never included even if nothing
+// points to it — it's the tree's root by convention, already reachable at
+// the project's base URL, so listing it here would just be noise.
 export async function listDiagrams(
   projectId: string
 ): Promise<{ slug: string; title: string }[]> {
   const { data, error } = await supabase
     .from('diagrams')
-    .select('slug, title')
+    .select('slug, title, content')
     .eq('project_id', projectId)
-    .order('title')
   if (error) throw error
-  return data ?? []
+  const diagrams = (data ?? []) as { slug: string; title: string; content: { nodes?: { childDiagram?: string }[] } }[]
+
+  const referencedSlugs = new Set<string>()
+  for (const d of diagrams) {
+    for (const node of d.content?.nodes ?? []) {
+      if (node.childDiagram) referencedSlugs.add(node.childDiagram)
+    }
+  }
+
+  return diagrams
+    .filter((d) => d.slug !== 'deployment' && !referencedSlugs.has(d.slug))
+    .map(({ slug, title }) => ({ slug, title }))
+    .sort((a, b) => a.title.localeCompare(b.title))
 }
 
 export async function getDiagram(
