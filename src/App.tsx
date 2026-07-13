@@ -5,6 +5,7 @@ import { DiagramPage } from './components/DiagramPage'
 import { ProjectDashboard } from './components/ProjectDashboard'
 import { McpIntegrationSettings } from './components/McpIntegrationSettings'
 import { ShareProjectPanel } from './components/ShareProjectPanel'
+import { McpAuthorize } from './components/McpAuthorize'
 
 export function App() {
   return (
@@ -41,6 +42,14 @@ export function App() {
           element={
             <RequireAuth>
               <McpIntegrationSettings />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/mcp-authorize"
+          element={
+            <RequireAuth>
+              <McpAuthorize />
             </RequireAuth>
           }
         />
