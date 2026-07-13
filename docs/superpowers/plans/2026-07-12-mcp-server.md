@@ -171,7 +171,7 @@ Create `mcp-server/src/supabaseForUser.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-import { supabaseForUser } from './supabaseForUser'
+import { supabaseForUser } from './supabaseForUser.js'
 
 describe('supabaseForUser', () => {
   it('creates a client with the Authorization header set to the given token', () => {
@@ -255,7 +255,7 @@ Create `mcp-server/src/mcpToken.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-import { mintMcpToken, verifyMcpToken } from './mcpToken'
+import { mintMcpToken, verifyMcpToken } from './mcpToken.js'
 
 describe('mcpToken', () => {
   it('round-trips claims through mint and verify', () => {
@@ -347,7 +347,7 @@ Create `mcp-server/src/oauth.test.ts`:
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import express from 'express'
-import { createOAuthRouter } from './oauth'
+import { createOAuthRouter } from './oauth.js'
 
 vi.mock('./mcpToken', () => ({
   mintMcpToken: vi.fn(() => 'minted-mcp-token'),
@@ -429,7 +429,7 @@ Create `mcp-server/src/oauth.ts`:
 ```typescript
 import { Router } from 'express'
 import crypto from 'node:crypto'
-import { mintMcpToken } from './mcpToken'
+import { mintMcpToken } from './mcpToken.js'
 
 interface PendingAuthorization {
   codeChallenge: string
@@ -562,8 +562,8 @@ Create `mcp-server/src/requireScope.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-import { requireScope } from './requireScope'
-import type { McpTokenClaims } from './mcpToken'
+import { requireScope } from './requireScope.js'
+import type { McpTokenClaims } from './mcpToken.js'
 
 const claims: McpTokenClaims = { userId: 'u1', scopes: ['read'], supabaseAccessToken: 't' }
 
@@ -586,7 +586,7 @@ Expected: FAIL.
 Create `mcp-server/src/requireScope.ts`:
 
 ```typescript
-import type { McpTokenClaims } from './mcpToken'
+import type { McpTokenClaims } from './mcpToken.js'
 
 export function requireScope(claims: McpTokenClaims, scope: 'read' | 'write' | 'admin'): void {
   if (!claims.scopes.includes(scope)) {
@@ -611,8 +611,8 @@ vi.mock('../supabaseForUser', () => ({
   })),
 }))
 
-import { listProjectsTool } from './listProjects'
-import type { McpTokenClaims } from '../mcpToken'
+import { listProjectsTool } from './listProjects.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 describe('listProjectsTool', () => {
   it('returns projects visible to the calling user', async () => {
@@ -636,9 +636,9 @@ Expected: FAIL.
 Create `mcp-server/src/tools/listProjects.ts`:
 
 ```typescript
-import { supabaseForUser } from '../supabaseForUser'
-import { requireScope } from '../requireScope'
-import type { McpTokenClaims } from '../mcpToken'
+import { supabaseForUser } from '../supabaseForUser.js'
+import { requireScope } from '../requireScope.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 export async function listProjectsTool(
   claims: McpTokenClaims
@@ -668,8 +668,8 @@ vi.mock('../supabaseForUser', () => ({
   })),
 }))
 
-import { getDiagramTool } from './getDiagram'
-import type { McpTokenClaims } from '../mcpToken'
+import { getDiagramTool } from './getDiagram.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 describe('getDiagramTool', () => {
   it('returns the diagram content and version', async () => {
@@ -700,9 +700,9 @@ Expected: FAIL.
 Create `mcp-server/src/tools/getDiagram.ts`:
 
 ```typescript
-import { supabaseForUser } from '../supabaseForUser'
-import { requireScope } from '../requireScope'
-import type { McpTokenClaims } from '../mcpToken'
+import { supabaseForUser } from '../supabaseForUser.js'
+import { requireScope } from '../requireScope.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 export async function getDiagramTool(
   claims: McpTokenClaims,
@@ -941,7 +941,7 @@ Create `mcp-server/src/tools/validateDiagram.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-import { validateDiagramTool } from './validateDiagram'
+import { validateDiagramTool } from './validateDiagram.js'
 
 describe('validateDiagramTool', () => {
   it('returns valid: true for a well-formed diagram', () => {
@@ -967,7 +967,7 @@ Expected: FAIL.
 Create `mcp-server/src/tools/validateDiagram.ts`:
 
 ```typescript
-import { validateDiagramShape, InvalidDiagramError } from '../validateDiagramShape'
+import { validateDiagramShape, InvalidDiagramError } from '../validateDiagramShape.js'
 
 export function validateDiagramTool(content: unknown): { valid: true } | { valid: false; reason: string } {
   try {
@@ -1008,8 +1008,8 @@ vi.mock('../supabaseForUser', () => ({
   })),
 }))
 
-import { createProjectTool } from './createProject'
-import type { McpTokenClaims } from '../mcpToken'
+import { createProjectTool } from './createProject.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 describe('createProjectTool', () => {
   it('creates the project and auto-grants mcp access to it', async () => {
@@ -1038,9 +1038,9 @@ Expected: FAIL.
 Create `mcp-server/src/tools/createProject.ts`:
 
 ```typescript
-import { supabaseForUser } from '../supabaseForUser'
-import { requireScope } from '../requireScope'
-import type { McpTokenClaims } from '../mcpToken'
+import { supabaseForUser } from '../supabaseForUser.js'
+import { requireScope } from '../requireScope.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 export async function createProjectTool(
   claims: McpTokenClaims,
@@ -1080,8 +1080,8 @@ vi.mock('../supabaseForUser', () => ({
   supabaseForUser: vi.fn(() => ({ from: () => ({ insert }) })),
 }))
 
-import { createDiagramTool } from './createDiagram'
-import type { McpTokenClaims } from '../mcpToken'
+import { createDiagramTool } from './createDiagram.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 describe('createDiagramTool', () => {
   it('inserts a new diagram row', async () => {
@@ -1114,10 +1114,10 @@ Expected: FAIL.
 Create `mcp-server/src/tools/createDiagram.ts`:
 
 ```typescript
-import { supabaseForUser } from '../supabaseForUser'
-import { requireScope } from '../requireScope'
-import type { McpTokenClaims } from '../mcpToken'
-import type { DiagramNodeData, DiagramEdgeData, Notation } from '../validateDiagramShape'
+import { supabaseForUser } from '../supabaseForUser.js'
+import { requireScope } from '../requireScope.js'
+import type { McpTokenClaims } from '../mcpToken.js'
+import type { DiagramNodeData, DiagramEdgeData, Notation } from '../validateDiagramShape.js'
 
 export async function createDiagramTool(
   claims: McpTokenClaims,
@@ -1155,8 +1155,8 @@ vi.mock('../supabaseForUser', () => ({
   })),
 }))
 
-import { updateDiagramTool } from './updateDiagram'
-import type { McpTokenClaims } from '../mcpToken'
+import { updateDiagramTool } from './updateDiagram.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 const claims: McpTokenClaims = { userId: 'u1', scopes: ['write'], supabaseAccessToken: 'tok' }
 
@@ -1190,10 +1190,10 @@ Expected: FAIL.
 Create `mcp-server/src/tools/updateDiagram.ts`:
 
 ```typescript
-import { supabaseForUser } from '../supabaseForUser'
-import { requireScope } from '../requireScope'
-import type { McpTokenClaims } from '../mcpToken'
-import type { DiagramNodeData, DiagramEdgeData } from '../validateDiagramShape'
+import { supabaseForUser } from '../supabaseForUser.js'
+import { requireScope } from '../requireScope.js'
+import type { McpTokenClaims } from '../mcpToken.js'
+import type { DiagramNodeData, DiagramEdgeData } from '../validateDiagramShape.js'
 
 export async function updateDiagramTool(
   claims: McpTokenClaims,
@@ -1257,8 +1257,8 @@ vi.mock('../supabaseForUser', () => ({
   supabaseForUser: vi.fn(() => ({ rpc })),
 }))
 
-import { inviteCollaboratorTool } from './inviteCollaborator'
-import type { McpTokenClaims } from '../mcpToken'
+import { inviteCollaboratorTool } from './inviteCollaborator.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 describe('inviteCollaboratorTool', () => {
   it('calls the invite rpc when the token has admin scope', async () => {
@@ -1289,9 +1289,9 @@ Expected: FAIL.
 Create `mcp-server/src/tools/inviteCollaborator.ts`:
 
 ```typescript
-import { supabaseForUser } from '../supabaseForUser'
-import { requireScope } from '../requireScope'
-import type { McpTokenClaims } from '../mcpToken'
+import { supabaseForUser } from '../supabaseForUser.js'
+import { requireScope } from '../requireScope.js'
+import type { McpTokenClaims } from '../mcpToken.js'
 
 export async function inviteCollaboratorTool(
   claims: McpTokenClaims,
@@ -1352,8 +1352,8 @@ vi.mock('./mcpToken', async () => {
   return actual
 })
 
-import { createApp } from './server'
-import { mintMcpToken } from './mcpToken'
+import { createApp } from './server.js'
+import { mintMcpToken } from './mcpToken.js'
 
 describe('MCP HTTP endpoint auth', () => {
   it('rejects a request with no bearer token', async () => {
@@ -1391,15 +1391,15 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { z } from 'zod'
-import { createOAuthRouter } from './oauth'
-import { verifyMcpToken, type McpTokenClaims } from './mcpToken'
-import { listProjectsTool } from './tools/listProjects'
-import { getDiagramTool } from './tools/getDiagram'
-import { createProjectTool } from './tools/createProject'
-import { createDiagramTool } from './tools/createDiagram'
-import { updateDiagramTool } from './tools/updateDiagram'
-import { validateDiagramTool } from './tools/validateDiagram'
-import { inviteCollaboratorTool } from './tools/inviteCollaborator'
+import { createOAuthRouter } from './oauth.js'
+import { verifyMcpToken, type McpTokenClaims } from './mcpToken.js'
+import { listProjectsTool } from './tools/listProjects.js'
+import { getDiagramTool } from './tools/getDiagram.js'
+import { createProjectTool } from './tools/createProject.js'
+import { createDiagramTool } from './tools/createDiagram.js'
+import { updateDiagramTool } from './tools/updateDiagram.js'
+import { validateDiagramTool } from './tools/validateDiagram.js'
+import { inviteCollaboratorTool } from './tools/inviteCollaborator.js'
 
 declare global {
   namespace Express {
@@ -1548,7 +1548,7 @@ Expected: PASS, all 3 cases.
 Replace `mcp-server/src/index.ts`:
 
 ```typescript
-import { createApp } from './server'
+import { createApp } from './server.js'
 
 const port = Number(process.env.PORT ?? 8787)
 createApp().listen(port, () => {
