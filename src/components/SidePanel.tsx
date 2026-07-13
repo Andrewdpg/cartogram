@@ -8,7 +8,7 @@ export interface SidePanelProps {
   notation: Notation
   onCloseNode: () => void
   diagramJson: string
-  onApplyJson: (raw: string) => string | null
+  onApplyJson: (raw: string) => Promise<string | null>
   collapsed: boolean
   onToggleCollapsed: () => void
 }
@@ -41,8 +41,8 @@ export function SidePanel({
     if (node) setTab('details')
   }, [node])
 
-  function handleApply() {
-    setJsonError(onApplyJson(jsonText))
+  async function handleApply() {
+    setJsonError(await onApplyJson(jsonText))
   }
 
   return (
@@ -151,7 +151,7 @@ export function SidePanel({
                 </button>
               </div>
               <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
-                Session-only — edits apply immediately but are not written back to the diagram file.
+                Saved to your account — conflicts are detected if edited elsewhere at the same time.
               </p>
             </div>
           )}

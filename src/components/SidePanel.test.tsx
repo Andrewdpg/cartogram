@@ -8,7 +8,7 @@ const baseProps = {
   notation: 'c4' as const,
   onCloseNode: () => {},
   diagramJson: '{}',
-  onApplyJson: () => null,
+  onApplyJson: async () => null,
 }
 
 describe('SidePanel', () => {
