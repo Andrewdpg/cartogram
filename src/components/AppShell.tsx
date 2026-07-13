@@ -1,23 +1,22 @@
-import { Link, Outlet, useParams } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from './AppHeader'
 import { UserMenu } from './UserMenu'
 
 export function AppShell() {
-  const { projectId } = useParams<{ projectId: string }>()
+  const location = useLocation()
+  const showBackLink = location.pathname !== '/projects'
 
   return (
     <div className="app-shell">
       <AppHeader
-        actions={
-          <>
-            {projectId && (
-              <Link to="/projects" className="btn">
-                ← All projects
-              </Link>
-            )}
-            <UserMenu />
-          </>
+        context={
+          showBackLink && (
+            <Link to="/projects" className="btn">
+              ← All projects
+            </Link>
+          )
         }
+        actions={<UserMenu />}
       />
       <div className="app-shell-content">
         <Outlet />

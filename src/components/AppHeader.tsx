@@ -10,12 +10,15 @@ export function BrandMark({ size = 24 }: { size?: number }) {
   )
 }
 
-export function AppHeader({ actions }: { actions?: ReactNode }) {
+export function AppHeader({ context, actions }: { context?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="app-header">
-      <div className="app-header-brand">
-        <BrandMark />
-        <span>cartogram</span>
+      <div className="app-header-left">
+        <div className="app-header-brand">
+          <BrandMark />
+          <span>cartogram</span>
+        </div>
+        {context}
       </div>
       {actions && <div className="app-header-actions">{actions}</div>}
     </header>

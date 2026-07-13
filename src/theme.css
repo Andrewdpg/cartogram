@@ -156,6 +156,12 @@ input:focus-visible {
   background: var(--surface);
 }
 
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .app-header-brand {
   display: flex;
   align-items: center;

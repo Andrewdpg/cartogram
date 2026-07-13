@@ -18,6 +18,7 @@ function renderAt(path: string) {
         <Route element={<AppShell />}>
           <Route path="/projects" element={<p>dashboard content</p>} />
           <Route path="/projects/:projectId/*" element={<p>diagram content</p>} />
+          <Route path="/settings/integrations" element={<p>settings content</p>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -39,6 +40,12 @@ describe('AppShell', () => {
   it('shows an "All projects" link when inside a project', () => {
     renderAt('/projects/p1/deployment')
     expect(screen.getByText('diagram content')).toBeInTheDocument()
+    expect(screen.getByText('← All projects')).toBeInTheDocument()
+  })
+
+  it('shows an "All projects" link on non-project screens like settings', () => {
+    renderAt('/settings/integrations')
+    expect(screen.getByText('settings content')).toBeInTheDocument()
     expect(screen.getByText('← All projects')).toBeInTheDocument()
   })
 })
