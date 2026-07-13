@@ -42,6 +42,18 @@ export async function createProject(name: string): Promise<{ id: string; name: s
   return data
 }
 
+export async function listDiagrams(
+  projectId: string
+): Promise<{ slug: string; title: string }[]> {
+  const { data, error } = await supabase
+    .from('diagrams')
+    .select('slug, title')
+    .eq('project_id', projectId)
+    .order('title')
+  if (error) throw error
+  return data ?? []
+}
+
 export async function getDiagram(
   projectId: string,
   slug: string

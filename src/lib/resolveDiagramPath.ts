@@ -13,9 +13,10 @@ export interface ResolvedDiagramPath {
 export async function resolveDiagramPath(
   projectId: string,
   segments: string[],
-  loadFn: (projectId: string, slug: string) => Promise<LoadedDiagram>
+  loadFn: (projectId: string, slug: string) => Promise<LoadedDiagram>,
+  rootSlug: string = 'deployment'
 ): Promise<ResolvedDiagramPath> {
-  const root = await loadFn(projectId, 'deployment')
+  const root = await loadFn(projectId, rootSlug)
   const chain: LoadedDiagram[] = [root]
   let current = root.diagram
 

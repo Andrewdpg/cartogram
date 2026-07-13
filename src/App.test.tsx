@@ -16,6 +16,7 @@ vi.mock('./lib/diagramRepo', () => ({
   updateDiagram: vi.fn(),
   listProjects: vi.fn().mockResolvedValue([]),
   createProject: vi.fn(),
+  listDiagrams: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('./lib/collaboratorRepo', () => ({

@@ -9,12 +9,13 @@ vi.mock('./supabaseClient', () => ({
   },
 }))
 
-import { getDiagram, updateDiagram, createDiagram, listProjects, createProject } from './diagramRepo'
+import { getDiagram, updateDiagram, createDiagram, listDiagrams, listProjects, createProject } from './diagramRepo'
 
 function chainable(result: unknown) {
   const chain: any = {
     select: () => chain,
     eq: () => chain,
+    order: () => Promise.resolve(result),
     single: () => Promise.resolve(result),
     insert: () => chain,
     update: () => chain,
@@ -54,6 +55,25 @@ describe('getDiagram', () => {
       })
     )
     await expect(getDiagram('proj-1', 'deployment')).rejects.toThrow()
+  })
+})
+
+describe('listDiagrams', () => {
+  it('lists every diagram in a project, ordered by title', async () => {
+    mockFrom.mockReturnValue(
+      chainable({
+        data: [
+          { slug: 'deployment', title: 'Deployment' },
+          { slug: 'servicios-primera-capa', title: 'QANTYR — Servicios (primera capa)' },
+        ],
+        error: null,
+      })
+    )
+    const result = await listDiagrams('proj-1')
+    expect(result).toEqual([
+      { slug: 'deployment', title: 'Deployment' },
+      { slug: 'servicios-primera-capa', title: 'QANTYR — Servicios (primera capa)' },
+    ])
   })
 })
 

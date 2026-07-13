@@ -44,4 +44,14 @@ describe('resolveDiagramPath', () => {
       DiagramNotFoundError
     )
   })
+
+  it('resolves from an explicit root slug instead of "deployment", when given one', async () => {
+    // A project can have diagrams that were never linked into the
+    // deployment tree via a childDiagram (e.g. created directly by the
+    // MCP server) — the diagram picker in DiagramPage opens those by
+    // passing their slug here directly, bypassing the tree walk entirely.
+    const result = await resolveDiagramPath('proj-1', [], fakeLoad, 'api-components')
+    expect(result.chain).toHaveLength(1)
+    expect(result.chain[0].diagram.id).toBe('api-components')
+  })
 })

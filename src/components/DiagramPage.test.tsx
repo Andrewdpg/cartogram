@@ -22,11 +22,19 @@ const diagrams: Record<string, Diagram> = {
     nodes: [{ id: 'auth', label: 'Auth Module', kind: 'component' }],
     edges: [],
   },
+  orphaned: {
+    id: 'orphaned',
+    title: 'Orphaned Diagram',
+    notation: 'c4',
+    nodes: [{ id: 'lonely', label: 'Lonely Node', kind: 'service' }],
+    edges: [],
+  },
 }
 
 vi.mock('../lib/diagramRepo', () => ({
   getDiagram: vi.fn(),
   updateDiagram: vi.fn(),
+  listDiagrams: vi.fn().mockResolvedValue([]),
 }))
 
 function renderAt(path: string) {
@@ -114,5 +122,24 @@ describe('DiagramPage', () => {
 
     expect(await screen.findByText(/Failed to save: network unreachable/)).toBeInTheDocument()
     expect(screen.queryByText(/Save conflict/)).not.toBeInTheDocument()
+  })
+
+  it('lets the user open a diagram that is not linked into the deployment tree via the picker', async () => {
+    // Regression guard: create_diagram (MCP or otherwise) can create a
+    // diagram with no childDiagram anywhere pointing to it — before the
+    // picker, that diagram was permanently unreachable from the UI short
+    // of hand-constructing a URL. ?diagram=<slug> opens it directly,
+    // bypassing the deployment-tree walk.
+    vi.mocked(diagramRepo.listDiagrams).mockResolvedValue([
+      { slug: 'deployment', title: 'Deployment' },
+      { slug: 'orphaned', title: 'Orphaned Diagram' },
+    ])
+    renderAt('/projects/test-project-id/')
+    await waitFor(() => expect(screen.getByText('API Service')).toBeInTheDocument())
+
+    const picker = await screen.findByLabelText('Diagram')
+    fireEvent.change(picker, { target: { value: 'orphaned' } })
+
+    expect(await screen.findByText('Lonely Node')).toBeInTheDocument()
   })
 })
