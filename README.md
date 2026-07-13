@@ -9,6 +9,7 @@ rectangle with a title.
 ## Usage
 
     npm install
+    supabase start  # Start the backend (see "Backend (Supabase)" section)
     npm run dev
 
 Click any node that looks clickable (it has a `childDiagram`) to drill down
@@ -44,8 +45,11 @@ live under `supabase/tests/database/`.
 
 ## Authoring diagrams
 
-Every diagram is one JSON file under `diagrams/`. See `diagrams/deployment.json`
-for a working example. A diagram has:
+Diagrams are stored in Supabase, not local files — create and edit them from
+the web app, or via the MCP server. `diagrams/*.json` in this repo are
+reference examples of the JSON shape only (used by `scripts/validate-diagrams.ts`
+as a schema-validation fixture) — editing them has no effect on the running
+app. A diagram has:
 
 - `notation` (optional, defaults to `"c4"`): `"c4"` for a high-level
   system/container/component view, `"uml-structural"` for a class-diagram-style
