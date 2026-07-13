@@ -6,10 +6,18 @@ diagrams. Every box has a real semantic shape and real engineering content
 (responsibility, tech stack, data owned, gotchas), not just a colored
 rectangle with a title.
 
+This repo is the frontend only. The Postgres schema/RLS and the MCP server
+live in sibling repos:
+
+- Backend (Supabase schema, RLS, migrations) — `architecture-map-supabase`
+- MCP server (OAuth 2.1 + tools for AI agents) — `architecture-map-mcp`
+
 ## Usage
 
     npm install
-    supabase start  # Start the backend (see "Backend (Supabase)" section)
+    # from the sibling architecture-map-supabase repo:
+    supabase start
+    # copy the printed API URL / anon key into .env.local (see .env.example)
     npm run dev
 
 Click any node that looks clickable (it has a `childDiagram`) to drill down
@@ -26,22 +34,10 @@ The side panel has three tabs:
 
 ## Backend (Supabase)
 
-Diagrams are stored in Supabase (Postgres), not local files. To run the
-backend locally:
-
-    supabase start
-
-This starts a local Postgres + Auth stack via Docker and prints an API URL,
-anon key, and service_role key. Apply schema changes with:
-
-    supabase db reset
-
-Run the RLS/access-control test suite with:
-
-    supabase test db
-
-Schema and policies live under `supabase/migrations/`; access-control tests
-live under `supabase/tests/database/`.
+Diagrams are stored in Supabase (Postgres), not local files. Schema,
+migrations, RLS policies, and the pgTAP access-control test suite live in the
+sibling `architecture-map-supabase` repo — see its README for `supabase
+start` / `supabase db reset` / `supabase test db`.
 
 ## Authoring diagrams
 
@@ -106,9 +102,3 @@ there to introduce a new visual category — `validateDiagramShape` rejects any
 `kind` not in the enum, so an unrecognized kind is a caught authoring mistake,
 not a silent fallback.
 
-## Known limitation
-
-`npm run build` (`tsc -b`) currently fails on a `vite`/`vitest` type-version
-mismatch unrelated to this project's own code — `npm run dev`, `npm test`, and
-`npm run validate` are all unaffected. Not yet fixed since nothing in this
-project's own workflow calls `npm run build`.
