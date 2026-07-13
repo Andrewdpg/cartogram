@@ -176,12 +176,21 @@ import { supabaseForUser } from './supabaseForUser'
 describe('supabaseForUser', () => {
   it('creates a client with the Authorization header set to the given token', () => {
     const client = supabaseForUser('a-user-jwt')
-    // @ts-expect-error accessing internal rest client config for the test
-    const headers = client.rest.headers
-    expect(headers.Authorization).toBe('Bearer a-user-jwt')
+    // @ts-expect-error accessing internal rest client config for the test.
+    // client.rest.headers is a Fetch Headers instance in
+    // @supabase/supabase-js — use its real API (.get, case-insensitive),
+    // not dot-property access; it is not a plain object.
+    const headers: Headers = client.rest.headers
+    expect(headers.get('authorization')).toBe('Bearer a-user-jwt')
   })
 })
 ```
+
+Note: do NOT "fix" this by wrapping `client.rest.headers` in a Proxy or
+otherwise monkey-patching the client's internal state to support
+dot-property access — that mutates production client behavior to satisfy a
+test assumption instead of fixing the test's assumption. Use `Headers`'
+real `.get()` API in the test, as shown above.
 
 - [ ] **Step 2: Run to verify it fails**
 
