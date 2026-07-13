@@ -3,6 +3,7 @@ import { LoginPage } from './components/LoginPage'
 import { RequireAuth } from './components/RequireAuth'
 import { DiagramPage } from './components/DiagramPage'
 import { ProjectDashboard } from './components/ProjectDashboard'
+import { McpIntegrationSettings } from './components/McpIntegrationSettings'
 
 export function App() {
   return (
@@ -22,6 +23,14 @@ export function App() {
           element={
             <RequireAuth>
               <DiagramPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings/integrations"
+          element={
+            <RequireAuth>
+              <McpIntegrationSettings />
             </RequireAuth>
           }
         />
