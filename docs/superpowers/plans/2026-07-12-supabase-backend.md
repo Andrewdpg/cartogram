@@ -82,7 +82,22 @@ git commit -m "chore: initialize local supabase project"
 
 **Files:**
 - Create: `supabase/migrations/<timestamp>_projects_and_members.sql`
+- Create: `supabase/migrations/<timestamp>_setup_test_helpers.sql`
 - Test: `supabase/tests/database/projects_rls.test.sql`
+
+**Prerequisite:** the pgTAP tests in this and later tasks call
+`tests.create_supabase_user`, `tests.authenticate_as`, and
+`tests.get_supabase_uid`. These are not built into a fresh `supabase init`
+project — they're normally installed from the `supabase_test_helpers`
+extension via `dbdev`/database.dev, which requires network access this
+environment may not have. Before writing the Step 4 test, add a migration
+that vendors the `tests` schema locally, following
+https://supabase.com/docs/guides/local-development/testing/pgtap-extended
+(the `pgtap`/`pgcrypto` extensions plus the `tests.create_supabase_user` /
+`tests.authenticate_as` / `tests.get_supabase_uid` / `tests.clear_authentication`
+function definitions from that page). Run `supabase migration new
+setup_test_helpers` to create the file. This is a one-time setup — later
+tasks' tests reuse the same `tests.*` schema without redefining it.
 
 **Interfaces:**
 - Produces: `projects(id, owner_id, name, workspace_id, created_at)`,
@@ -116,11 +131,33 @@ create table project_members (
 alter table projects enable row level security;
 alter table project_members enable row level security;
 
+-- RLS restricts *which rows* are visible/writable, but the authenticated
+-- role still needs the base table grant to touch the table at all —
+-- without this, every operation fails with "permission denied for table"
+-- regardless of RLS.
+grant select, insert, update, delete on projects to authenticated;
+grant select, insert, update, delete on project_members to authenticated;
+
+-- security definer helpers: projects' and project_members' SELECT policies
+-- each need to check the other table. Doing that with a plain `exists
+-- (select ... from the_other_table ...)` inside a USING clause causes
+-- Postgres to re-evaluate the other table's RLS policy, which checks back
+-- into this one — "infinite recursion detected in policy for relation".
+-- security definer functions run with the privileges of their owner and
+-- bypass RLS internally, breaking the cycle.
+create function is_project_owner(p_project_id uuid) returns boolean
+  language sql security definer set search_path = public stable as $$
+  select exists (select 1 from projects where id = p_project_id and owner_id = auth.uid())
+$$;
+
+create function is_project_member(p_project_id uuid) returns boolean
+  language sql security definer set search_path = public stable as $$
+  select exists (select 1 from project_members where project_id = p_project_id and user_id = auth.uid())
+$$;
+
 create policy "select own or member projects" on projects
   for select using (
-    owner_id = auth.uid()
-    or exists (select 1 from project_members m
-               where m.project_id = projects.id and m.user_id = auth.uid())
+    owner_id = auth.uid() or is_project_member(id)
   );
 
 create policy "authenticated users create projects" on projects
@@ -134,16 +171,19 @@ create policy "only owner deletes project" on projects
 
 create policy "members visible to project owner and the member" on project_members
   for select using (
-    user_id = auth.uid()
-    or exists (select 1 from projects p
-               where p.id = project_members.project_id and p.owner_id = auth.uid())
+    user_id = auth.uid() or is_project_owner(project_id)
   );
 
+-- Note: "for insert, update, delete using (...)" is invalid Postgres
+-- syntax — CREATE POLICY accepts exactly one command, or `for all`. Since
+-- this policy's USING condition is identical across insert/update/delete,
+-- `for all` is correct here (it also covers select, but the more specific
+-- "members visible..." select policy above still applies — Postgres
+-- combines multiple permissive policies for the same command with OR, and
+-- there is no select-only distinction being lost since both would allow
+-- the same owner to select anyway).
 create policy "only owner manages members" on project_members
-  for insert, update, delete using (
-    exists (select 1 from projects p
-            where p.id = project_members.project_id and p.owner_id = auth.uid())
-  );
+  for all using (is_project_owner(project_id));
 ```
 
 - [ ] **Step 3: Apply the migration to the local stack**
@@ -199,16 +239,22 @@ select isnt_empty(
   'member can select a project they were added to'
 );
 
--- Viewer cannot update the project (not owner)
-select throws_ok(
-  $$update projects set name = 'Hacked' where id = '11111111-1111-1111-1111-111111111111'$$,
-  '42501'
+-- Viewer cannot update the project (not owner). Note: an RLS-blocked
+-- UPDATE/DELETE does not raise an exception in raw SQL — Postgres RLS
+-- silently filters the row out (PostgreSQL docs: "such rows are silently
+-- suppressed; no error is reported"). The `42501 insufficient_privilege`
+-- error is constructed by PostgREST's HTTP layer when it sees a 0-row
+-- result, not something raw SQL/pgTAP can observe — so this asserts the
+-- 0-rows-affected outcome that actually happens at the database layer.
+select is_empty(
+  $$update projects set name = 'Hacked' where id = '11111111-1111-1111-1111-111111111111' returning id$$,
+  'viewer cannot update a project they do not own (0 rows affected)'
 );
 
--- Viewer cannot delete the project
-select throws_ok(
-  $$delete from projects where id = '11111111-1111-1111-1111-111111111111'$$,
-  '42501'
+-- Viewer cannot delete the project (same silently-filtered-row reasoning as above)
+select is_empty(
+  $$delete from projects where id = '11111111-1111-1111-1111-111111111111' returning id$$,
+  'viewer cannot delete a project they do not own (0 rows affected)'
 );
 
 select * from finish();
@@ -279,6 +325,9 @@ create table diagrams (
 
 alter table diagrams enable row level security;
 
+-- Same base-grant requirement as Task 2 — RLS restricts rows, not table access.
+grant select, insert, update, delete on diagrams to authenticated;
+
 create policy "select diagrams of accessible projects" on diagrams
   for select using (
     exists (select 1 from projects p
@@ -288,8 +337,12 @@ create policy "select diagrams of accessible projects" on diagrams
                             where m.project_id = p.id and m.user_id = auth.uid())))
   );
 
+-- Note: "for insert, update using (...)" is invalid Postgres syntax (see
+-- Task 2's note on CREATE POLICY accepting exactly one command, or `for
+-- all`) — use `for all` since this table has no separate delete policy and
+-- the select policy above still independently governs select access.
 create policy "write diagrams if owner or editor" on diagrams
-  for insert, update using (
+  for all using (
     exists (select 1 from projects p
             where p.id = diagrams.project_id
             and (p.owner_id = auth.uid()
@@ -339,10 +392,13 @@ select isnt_empty(
   'viewer can select a diagram in a project they belong to'
 );
 
--- Viewer cannot write
-select throws_ok(
-  $$update diagrams set title = 'Hacked' where id = '33333333-3333-3333-3333-333333333333'$$,
-  '42501'
+-- Viewer cannot write. Same reasoning as the projects_rls test: an
+-- RLS-blocked UPDATE silently affects 0 rows in raw SQL rather than
+-- throwing — `42501` is a PostgREST HTTP-layer construct, not a Postgres
+-- exception, so this asserts the 0-rows-affected outcome directly.
+select is_empty(
+  $$update diagrams set title = 'Hacked' where id = '33333333-3333-3333-3333-333333333333' returning id$$,
+  'viewer cannot update a diagram in a project they only view (0 rows affected)'
 );
 
 -- Editor can write
@@ -460,8 +516,13 @@ create table mcp_project_grants (
 
 alter table mcp_project_grants enable row level security;
 
+-- Same base-grant requirement as Tasks 2-3 — RLS restricts rows, not table access.
+grant select, insert, update, delete on mcp_project_grants to authenticated;
+
+-- Note: "for select, insert, update, delete using (...)" is invalid syntax
+-- (see Task 2's note) — `for all` covers the same four commands correctly.
 create policy "users manage their own mcp grants" on mcp_project_grants
-  for select, insert, update, delete using (user_id = auth.uid());
+  for all using (user_id = auth.uid());
 
 -- MCP-originated requests (JWT carries is_mcp_request: true) additionally
 -- require a matching grant row, on top of the existing owner/member policies.
