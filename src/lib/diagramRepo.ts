@@ -2,13 +2,13 @@ import { supabase } from './supabaseClient'
 import { validateDiagramShape } from './validateDiagram'
 import type { Diagram } from './types'
 
-export async function listProjects(): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabase.from('projects').select('id, name')
+export async function listProjects(): Promise<{ id: string; name: string; owner_id: string }[]> {
+  const { data, error } = await supabase.from('projects').select('id, name, owner_id')
   if (error) throw error
   return data ?? []
 }
 
-export async function createProject(name: string): Promise<{ id: string; name: string }> {
+export async function createProject(name: string): Promise<{ id: string; name: string; owner_id: string }> {
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -22,7 +22,7 @@ export async function createProject(name: string): Promise<{ id: string; name: s
   const { data, error } = await supabase
     .from('projects')
     .insert({ name, owner_id: user.id })
-    .select('id, name')
+    .select('id, name, owner_id')
     .single()
   if (error) throw error
 

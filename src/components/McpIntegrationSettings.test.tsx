@@ -11,8 +11,8 @@ import { listMcpGrants, setMcpGrant } from '../lib/mcpGrantRepo'
 describe('McpIntegrationSettings', () => {
   it('shows a toggle per project reflecting current grant state', async () => {
     vi.mocked(listProjects).mockResolvedValue([
-      { id: 'p1', name: 'Granted Repo' },
-      { id: 'p2', name: 'Ungranted Repo' },
+      { id: 'p1', name: 'Granted Repo', owner_id: 'me' },
+      { id: 'p2', name: 'Ungranted Repo', owner_id: 'me' },
     ])
     vi.mocked(listMcpGrants).mockResolvedValue(new Set(['p1']))
 
@@ -25,7 +25,7 @@ describe('McpIntegrationSettings', () => {
   })
 
   it('toggling a project calls setMcpGrant', async () => {
-    vi.mocked(listProjects).mockResolvedValue([{ id: 'p1', name: 'Repo' }])
+    vi.mocked(listProjects).mockResolvedValue([{ id: 'p1', name: 'Repo', owner_id: 'me' }])
     vi.mocked(listMcpGrants).mockResolvedValue(new Set())
     vi.mocked(setMcpGrant).mockResolvedValue(undefined)
 
