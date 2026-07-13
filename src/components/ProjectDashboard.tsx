@@ -10,22 +10,31 @@ interface Project {
 export function ProjectDashboard() {
   const [projects, setProjects] = useState<Project[]>([])
   const [newName, setNewName] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    listProjects().then(setProjects)
+    listProjects()
+      .then(setProjects)
+      .catch((err) => setError((err as Error).message))
   }, [])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!newName.trim()) return
-    const created = await createProject(newName)
-    setProjects((prev) => [...prev, created])
-    setNewName('')
+    try {
+      const created = await createProject(newName)
+      setProjects((prev) => [...prev, created])
+      setNewName('')
+      setError(null)
+    } catch (err) {
+      setError((err as Error).message)
+    }
   }
 
   return (
     <div style={{ padding: 24 }}>
       <h1>Your projects</h1>
+      {error && <p role="alert">{error}</p>}
       <ul>
         {projects.map((p) => (
           <li key={p.id}>

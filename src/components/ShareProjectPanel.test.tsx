@@ -34,4 +34,23 @@ describe('ShareProjectPanel', () => {
       expect(inviteCollaborator).toHaveBeenCalledWith('proj-1', 'new@example.com', 'viewer')
     )
   })
+
+  it('shows an error message instead of silently failing when the invite rpc rejects', async () => {
+    // Regression guard: this component previously had no .catch on either
+    // the initial listCollaborators load or the invite handler — a
+    // rejection (e.g. inviting an email with no matching user, which
+    // invite_collaborator_by_email explicitly rejects) surfaced as an
+    // unhandled promise rejection with zero user-visible feedback.
+    vi.mocked(listCollaborators).mockResolvedValue([])
+    vi.mocked(inviteCollaborator).mockRejectedValue(new Error('No user with that email'))
+    render(<ShareProjectPanel projectId="proj-1" />)
+    await waitFor(() => expect(listCollaborators).toHaveBeenCalled())
+
+    fireEvent.change(screen.getByLabelText('Collaborator email'), {
+      target: { value: 'nobody@example.com' },
+    })
+    fireEvent.click(screen.getByText('Invite as viewer'))
+
+    expect(await screen.findByText('No user with that email')).toBeInTheDocument()
+  })
 })
