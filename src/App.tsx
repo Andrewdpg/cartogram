@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from './components/LoginPage'
 import { RequireAuth } from './components/RequireAuth'
+import { AppShell } from './components/AppShell'
 import { DiagramPage } from './components/DiagramPage'
 import { ProjectDashboard } from './components/ProjectDashboard'
 import { McpIntegrationSettings } from './components/McpIntegrationSettings'
@@ -14,37 +15,17 @@ export function App() {
         <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route
-          path="/projects"
           element={
             <RequireAuth>
-              <ProjectDashboard />
+              <AppShell />
             </RequireAuth>
           }
-        />
-        <Route
-          path="/projects/:projectId/*"
-          element={
-            <RequireAuth>
-              <DiagramPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/projects/:projectId/share"
-          element={
-            <RequireAuth>
-              <ShareProjectPanel />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/settings/integrations"
-          element={
-            <RequireAuth>
-              <McpIntegrationSettings />
-            </RequireAuth>
-          }
-        />
+        >
+          <Route path="/projects" element={<ProjectDashboard />} />
+          <Route path="/projects/:projectId/share" element={<ShareProjectPanel />} />
+          <Route path="/projects/:projectId/*" element={<DiagramPage />} />
+          <Route path="/settings/integrations" element={<McpIntegrationSettings />} />
+        </Route>
         <Route
           path="/mcp-authorize"
           element={
