@@ -402,8 +402,12 @@ Create `src/lib/diagramRepo.test.ts`:
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockFrom = vi.fn()
+const mockGetUser = vi.fn()
 vi.mock('./supabaseClient', () => ({
-  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
+  supabase: {
+    from: (...args: unknown[]) => mockFrom(...args),
+    auth: { getUser: (...args: unknown[]) => mockGetUser(...args) },
+  },
 }))
 
 import { getDiagram, updateDiagram, createDiagram, listProjects, createProject } from './diagramRepo'
@@ -491,6 +495,7 @@ describe('listProjects / createProject', () => {
   })
 
   it('creates a project', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
     mockFrom.mockReturnValue(chainable({ data: { id: 'p2', name: 'New Proj' }, error: null }))
     const result = await createProject('New Proj')
     expect(result).toEqual({ id: 'p2', name: 'New Proj' })
@@ -523,6 +528,12 @@ export async function createProject(name: string): Promise<{ id: string; name: s
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
+  // owner_id is required here, not optional: the projects table has
+  // owner_id uuid not null with no column default (see the Supabase
+  // backend plan's Task 2), and its RLS insert policy is
+  // `with check (owner_id = auth.uid())` — the check evaluates the row as
+  // sent, so the client must supply owner_id itself, a server-side
+  // trigger/default would not satisfy the check.
   const { data, error } = await supabase
     .from('projects')
     .insert({ name, owner_id: user.id })
