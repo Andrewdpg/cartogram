@@ -8,6 +8,8 @@ interface Project {
   name: string
 }
 
+const mcpServerUrl = import.meta.env.VITE_MCP_SERVER_URL ?? 'http://localhost:8787'
+
 function formatRelative(iso: string): string {
   const diffMin = Math.round((new Date(iso).getTime() - Date.now()) / 60000)
   const future = diffMin >= 0
@@ -68,6 +70,18 @@ export function McpIntegrationSettings() {
           {error}
         </p>
       )}
+
+      <section className="dashboard-section">
+        <h2 className="dashboard-section-title">Connect an MCP agent</h2>
+        <p className="settings-section-hint">
+          Point any MCP-compatible client (e.g. Claude Code) at this server URL. It will guide the
+          client through registration and let you choose which projects to grant on the consent
+          screen that follows.
+        </p>
+        <div className="settings-row">
+          <code className="settings-row-label">{mcpServerUrl}</code>
+        </div>
+      </section>
 
       <section className="dashboard-section">
         <h2 className="dashboard-section-title">MCP-connected projects</h2>

@@ -21,6 +21,14 @@ export function AppShell() {
       <div className="app-shell-content">
         <Outlet />
       </div>
+      <footer className="app-shell-footer">
+        Cartogram is an active work in progress — expect rough edges, and treat this deployment as a
+        demo rather than a stable service.{' '}
+        <a href="https://github.com/Andrewdpg/cartogram" target="_blank" rel="noreferrer">
+          Source and contributions welcome on GitHub
+        </a>
+        .
+      </footer>
     </div>
   )
 }

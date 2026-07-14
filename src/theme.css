@@ -480,6 +480,20 @@ input:focus-visible {
   flex-direction: column;
 }
 
+.app-shell-footer {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+.app-shell-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .user-menu {
   position: relative;
 }
