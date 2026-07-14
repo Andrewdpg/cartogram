@@ -1,4 +1,4 @@
-# architecture-map
+# Cartogram
 
 Personal, project-agnostic tool to explore a codebase's architecture as an
 interactive, recursively drill-down-able map — instead of static Mermaid
@@ -6,16 +6,21 @@ diagrams. Every box has a real semantic shape and real engineering content
 (responsibility, tech stack, data owned, gotchas), not just a colored
 rectangle with a title.
 
+> **Status: early-stage, active development.** Expect rough edges. This is a
+> demo deployment, not a stable service — issues and PRs are welcome.
+
+Live demo: https://cartogram.andrewpg.me
+
 This repo is the frontend only. The Postgres schema/RLS and the MCP server
 live in sibling repos:
 
-- Backend (Supabase schema, RLS, migrations) — `architecture-map-supabase`
-- MCP server (OAuth 2.1 + tools for AI agents) — `architecture-map-mcp`
+- Backend (Supabase schema, RLS, migrations) — [`cartogram-supabase`](https://github.com/Andrewdpg/cartogram-supabase)
+- MCP server (OAuth 2.1 + tools for AI agents) — [`cartogram-mcp`](https://github.com/Andrewdpg/cartogram-mcp), deployed at `https://mcp.cartogram.andrewpg.me`
 
 ## Usage
 
     npm install
-    # from the sibling architecture-map-supabase repo:
+    # from the sibling cartogram-supabase repo:
     supabase start
     # copy the printed API URL / anon key into .env.local (see .env.example)
     npm run dev
@@ -36,7 +41,7 @@ The side panel has three tabs:
 
 Diagrams are stored in Supabase (Postgres), not local files. Schema,
 migrations, RLS policies, and the pgTAP access-control test suite live in the
-sibling `architecture-map-supabase` repo — see its README for `supabase
+sibling `cartogram-supabase` repo — see its README for `supabase
 start` / `supabase db reset` / `supabase test db`.
 
 ## Authoring diagrams
