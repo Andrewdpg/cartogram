@@ -47,10 +47,8 @@ start` / `supabase db reset` / `supabase test db`.
 ## Authoring diagrams
 
 Diagrams are stored in Supabase, not local files — create and edit them from
-the web app, or via the MCP server. `diagrams/*.json` in this repo are
-reference examples of the JSON shape only (used by `scripts/validate-diagrams.ts`
-as a schema-validation fixture) — editing them has no effect on the running
-app. A diagram has:
+the web app's JSON editor (side panel → Edit JSON tab), or via the MCP
+server's `create_diagram`/`update_diagram` tools. A diagram has:
 
 - `notation` (optional, defaults to `"c4"`): `"c4"` for a high-level
   system/container/component view, `"uml-structural"` for a class-diagram-style
@@ -87,16 +85,9 @@ Legend tab in the running app, to see them all.
   `#symbol`), shown as a monospace list in the detail panel. Not validated
   beyond "is a string[]" — it's a trusted citation, not a parsed reference.
 
-Run `npm run validate` after editing diagrams to catch typos: an unknown
-`kind`/`notation`/`relationship`, a malformed optional field, an edge
-referencing an unknown node id, or a `childDiagram` pointing at a file that
-doesn't exist.
-
-## Reusing this for another project
-
-Clone this repo, delete the contents of `diagrams/`, and author a new set of
-JSON files for the other project. No source changes needed — `diagrams/` is
-the only project-specific part of this tool.
+The JSON editor's Apply button re-validates on every save: an unknown
+`kind`/`notation`/`relationship`, or a malformed optional field, is rejected
+before it's written to Supabase.
 
 ## Adding a new shape
 
